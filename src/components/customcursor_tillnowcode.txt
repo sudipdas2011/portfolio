@@ -1,0 +1,100 @@
+import React, { useEffect, useRef } from "react";
+
+export default function CursorSelect() {
+  const cursorRef = useRef(null);
+
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+
+    let isHovering = false;
+
+    // 1. Free Mouse Tracking (Default state)
+    const moveCursor = (e) => {
+      if (isHovering) return;
+      
+      const defaultSize = 20; // Default tiny box size
+      cursor.style.width = `${defaultSize}px`;
+      cursor.style.height = `${defaultSize}px`;
+      cursor.style.transform = `translate3d(${e.clientX - defaultSize / 2}px, ${e.clientY - defaultSize / 2}px, 0)`;
+    };
+
+    // 2. Proportional Random Horizontal Offset on Focus
+    const handleMouseOver = (e) => {
+      // Strictly looks for your clean selector attribute
+      const target = e.target.closest("[cursor-select='true']");
+      if (!target) return;
+
+      isHovering = true;
+      
+      const bounds = target.getBoundingClientRect();
+      const width = bounds.width;
+      const height = bounds.height;
+
+      // Lock vertical padding to a clean baseline, randomize horizontal strictly forward
+      const fixedPaddingY = 6; 
+      const minPaddingX = 10;
+      const randomOffsetW = Math.abs(width * (Math.random() * 0.20)); // Strictly additive 0% to 20% of width
+      const dynamicPaddingX = minPaddingX + randomOffsetW;
+
+      // Assign calculated dimensions cleanly
+      cursor.style.width = `${width + dynamicPaddingX * 2}px`;
+      cursor.style.height = `${height + fixedPaddingY * 2}px`;
+      
+      // Lock position directly onto the element coordinates
+      cursor.style.transform = `translate3d(${bounds.left - dynamicPaddingX}px, ${bounds.top - fixedPaddingY}px, 0)`;
+    };
+
+    // 3. Reset State on Leave
+    const handleMouseOut = (e) => {
+      const target = e.target.closest("[cursor-select='true']");
+      if (!target) return;
+
+      isHovering = false;
+    };
+
+    window.addEventListener("mousemove", moveCursor, { passive: true });
+    window.addEventListener("mouseover", handleMouseOver);
+    window.addEventListener("mouseout", handleMouseOut);
+
+    return () => {
+      window.removeEventListener("mousemove", moveCursor);
+      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mouseout", handleMouseOut);
+    };
+  }, []);
+
+  return (
+    <>
+      <style>{`
+        /* Safely deactivates standard OS browser pointers only over targets tagged with your attribute */
+        [cursor-select='true'], [cursor-select='true'] * {
+          cursor: none !important;
+        }
+
+        .brutalist-select-mask {
+          position: fixed;
+          top: 0;
+          left: 0;
+          pointer-events: none;
+          z-index: 999999;
+          
+          /* Solid cutting mask background layer */
+          background-color: #ffffff;
+          mix-blend-mode: difference;
+          border-radius: 0px; 
+          
+          will-change: transform, width, height;
+          
+          /* Smooth, elastic expansion transition curves */
+          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                      width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                      height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      `}</style>
+
+      {/* Render the pointer shape tracking layer */}
+      <div ref={cursorRef} className="brutalist-select-mask" />
+    </>
+  );
+}

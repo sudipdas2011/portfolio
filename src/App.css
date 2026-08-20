@@ -1,0 +1,99 @@
+body, html {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #ffffff;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+.portfolio-content {
+  background-color: #ffffff;
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hero-section {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.center-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ─── TEXT FOREGROUND LAYER ─── */
+#hero-title {
+  position: relative;
+  z-index: 5; /*  High index forces text out over the top of the cards */
+  pointer-events: none; /* Mouse moves pass through white space directly down to cards */
+}
+
+.hero-heading {
+  font-size: 5.5rem;
+  font-weight: 900;
+  color: #000000;
+  letter-spacing: -0.03em;
+  margin: 0;
+  line-height: 1;
+  pointer-events: auto; /* Restores mouse hover targeting on letters */
+}
+
+/* ─── CARD BACKGROUND LAYER ─── */
+.revolving-stage-container {
+  z-index: 1; /*  Low index places the entire orbit circle underneath text */
+  pointer-events: none;
+}
+
+.revolving-card-wrapper {
+  pointer-events: auto;
+}
+
+.brutalist-43-card {
+  width: 130px;
+  aspect-ratio: 3 / 4;
+  filter: invert(100%);
+  background-color: #ffffff;
+  border: 1px solid #ffffff;
+  /*box-shadow: 4px 4px 0px #000000;*/
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pad-logo {
+  padding: 15px;
+  box-sizing: border-box;
+  object-fit: contain;
+}
+
+.brutalist-solid-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #000000;
+}
+
