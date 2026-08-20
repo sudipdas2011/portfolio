@@ -2,7 +2,7 @@ import { useState } from 'react';
 import reactLogo from './assets/react.svg';
 import viteLogo from './assets/vite.svg';
 import heroImg from './assets/hero.png';
-import CustomCursor from './components/CustomCursor';
+import CustomCursor, { CursorEnlarge } from './components/CustomCursor';
 import BrutalistLoader from './components/BrutalistLoader';
 import TextRise from './components/TextRise';
 import RevolvingStage from './components/RevolvingStage';
@@ -23,8 +23,8 @@ export default function App() {
           <main className="hero-section">
             <div className="center-stage">
               
-              <div id="hero-title">
-                <TextRise 
+              <div id="hero-title" style={{ transform: `scale(${(window.innerWidth * 0.0003).toFixed(2)})`, transformOrigin: "center" }}>
+                <TextRise
                   text="sudip das." 
                   className="hero-heading" 
                   onComplete={() => setTextAnimationDone(true)} 
@@ -36,7 +36,7 @@ export default function App() {
                 - easeType: "easeIn", "easeOut", "easeInOut", or "linear" applied to the revolution trail
               */}
               {textAnimationDone && (
-                <RevolvingStage targetId="hero-title" radius={window.innerHeight * 0.25} rpm={4} easeType="easeInOut">
+                <RevolvingStage targetId="hero-title" radius={window.innerHeight * 0.3} rpm={1.6} easeType="linear">
                   <img src={heroImg} alt="Hero" className="card-media" />
                   <img src="../src/assets/cards/ilum.jpg" alt="Hero" className="card-media" />
                   <img src="../src/assets/cards/jpn_falling.jpg" alt="Hero" className="card-media" />

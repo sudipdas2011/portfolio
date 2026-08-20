@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useAnimationControls, useMotionValue, useTransform } from 'framer-motion';
 import MagneticPull from './MagneticPull';
+import { CursorEnlarge } from './CustomCursor'; // Strictly imported the wrapper tag block
 
 export default function RevolvingStage({ 
   children, 
@@ -18,7 +19,6 @@ export default function RevolvingStage({
 
   // 1. Set up high-precision motion trackers for real-time counter-rotation
   const orbitRotation = useMotionValue(0);
-  // This smoothly mirrors the exact negative value of the orbit angle at any given pixel coordinate frame
   const inverseRotation = useTransform(orbitRotation, (value) => -value);
 
   const durationPerLap = rpm > 0 ? 60 / rpm : 20;
@@ -103,18 +103,23 @@ export default function RevolvingStage({
                 transform: 'translate(-50%, -50%)',
               }}
             >
-              {/* 4. Apply the inverse motion variable style. 
-                  Cards now stay perfectly upright with identical orientation all the way around. */}
+              {/* 4. Apply the inverse motion variable style. */}
               <MagneticPull>
                 <motion.div 
                   style={{ rotate: inverseRotation }}
                   className="brutalist-43-card"
                 >
-                  {/*<MagneticPull>*/}
+                  {/* 
+                    INTEGRATED ENLARGEMENT WRAPPER SYSTEM:
+                    By wrapping the outer grid element context directly here, 
+                    the custom cursor reads the exact width/height bounds of each 
+                    revolving asset block seamlessly as it travels down its loop path.
+                  */}
+                  <CursorEnlarge style={{ width: '100%', height: '100%' }}>
                     <div style={{ width: '100%', height: '100%' }}>
                       {card}
                     </div>
-                  {/*</MagneticPull>*/}
+                  </CursorEnlarge>
                 </motion.div>
               </MagneticPull>
             </div>

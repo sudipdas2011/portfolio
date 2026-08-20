@@ -1,5 +1,19 @@
 import React, { useEffect, useRef } from "react";
 
+// --- 1. THE WRAPPER TAG COMPONENT ---
+export function CursorEnlarge({ children, className = "", style = {} }) {
+  return (
+    <div
+      data-hover="true"
+      className={className}
+      style={{ display: "inline-block", ...style }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// --- 2. THE FINALIZED REFACTORED CUSTOM CURSOR ENGINE ---
 export default function CustomCursor() {
   const cursorRef = useRef(null);
 
@@ -7,55 +21,114 @@ export default function CustomCursor() {
     const cursor = cursorRef.current;
     if (!cursor) return;
 
-    // Track state to switch between free-mouse tracking and locked-bounds framing
     let isHovering = false;
+    let activeTarget = null;
+    let animationFrameId = null;
 
-    // 1. Core Mouse Tracking (Runs when not locked onto an element)
-    const moveCursor = (e) => {
-      if (isHovering) return; // Allow CSS layout rules to handle the bounds instead
-      
-      const defaultSize = 15; // Default tiny box size
-      cursor.style.width = `${defaultSize}px`;
-      cursor.style.height = `${defaultSize}px`;
-      
-      // Center the tracking box accurately over your hidden native pointer
-      cursor.style.transform = `translate3d(${e.clientX - defaultSize / 2}px, ${e.clientY - defaultSize / 2}px, 0)`;
+    // Track real-time raw mouse coordinates
+    let mouseX = 0;
+    let mouseY = 0;
+    const defaultSize = 15;
+
+    const updateMouseCoords = (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
 
-    // 2. Smart Boundary Detection
+    // Helper function to safely locate valid brutalist interactive target elements
+    const getValidTarget = (element) => {
+      if (!element) return null;
+      return element.closest("a, button, h1, h2, p, [data-hover='true']");
+    };
+
+    // --- HIGH-PERFORMANCE PROACTIVE RENDER LOOP ---
+    const renderLoop = () => {
+      // 1. SPATIAL INTERSECTION CHECK
+      if (isHovering && activeTarget) {
+        const bounds = activeTarget.getBoundingClientRect();
+        
+        // Check if the actual mouse coordinates have slipped outside the active card's moving box
+        if (
+          mouseX < bounds.left ||
+          mouseX > bounds.right ||
+          mouseY < bounds.top ||
+          mouseY > bounds.bottom
+        ) {
+          // --- PROACTIVE SCANNING ENHANCEMENT ---
+          // Scan the exact point under the pointer to see if another card has rotated into place
+          const elementUnderMouse = document.elementFromPoint(mouseX, mouseY);
+          const nextTarget = getValidTarget(elementUnderMouse);
+
+          if (nextTarget && nextTarget !== activeTarget) {
+            // Instantly transfer lock settings to the newly detected card without unmounting focus
+            activeTarget = nextTarget;
+          } else {
+            // Absolute baseline release if the space beneath the pointer is entirely empty
+            isHovering = false;
+            activeTarget = null;
+          }
+        }
+      } else if (!isHovering) {
+        // CONTINUOUS BACKGROUND PROACTIVE SCAN
+        // If the cursor is free but cards are spinning under a static mouse pointer, catch them instantly
+        const elementUnderMouse = document.elementFromPoint(mouseX, mouseY);
+        const autoTarget = getValidTarget(elementUnderMouse);
+        
+        if (autoTarget) {
+          isHovering = true;
+          activeTarget = autoTarget;
+        }
+      }
+
+      // 2. LAYOUT ENGINE RENDERING DRAWS
+      if (!isHovering || !activeTarget) {
+        // STATE A: Free Mouse Tracking (Snaps box back to default pointer coordinates)
+        cursor.style.width = `${defaultSize}px`;
+        cursor.style.height = `${defaultSize}px`;
+        cursor.style.transform = `translate3d(${mouseX - defaultSize / 2}px, ${mouseY - defaultSize / 2}px, 0)`;
+      } else {
+        // STATE B: Active Proportional Tracking (Locks coordinates onto moving bounds layout)
+        const bounds = activeTarget.getBoundingClientRect();
+        const padding = 12; // Your exact original padding specification
+
+        cursor.style.width = `${bounds.width + padding * 2}px`;
+        cursor.style.height = `${bounds.height + padding * 2}px`;
+        cursor.style.transform = `translate3d(${bounds.left - padding}px, ${bounds.top - padding}px, 0)`;
+      }
+
+      // Re-queue the engine frame tick
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    // Kick off the loop thread
+    animationFrameId = requestAnimationFrame(renderLoop);
+
+    // --- STANDARD NATIVE FALLBACK HANDLERS ---
     const handleMouseOver = (e) => {
-      // Automatically triggers for links, buttons, headings, or anything marked with data-hover
-      const target = e.target.closest("a, button, h1, h2, p, [data-hover='true']");
+      const target = getValidTarget(e.target);
       if (!target) return;
 
       isHovering = true;
-      
-      // Smart feature: Read the live bounding metrics directly from the DOM object
-      const bounds = target.getBoundingClientRect();
-      const padding = 12; // Extra brutalist padding frame around the object text
-
-      // Morph the custom cursor layout directly into the object's dimensional envelope
-      cursor.style.width = `${bounds.width + padding * 2}px`;
-      cursor.style.height = `${bounds.height + padding * 2}px`;
-      
-      // Snap positions perfectly to the screen coordinates of the tracked element
-      cursor.style.transform = `translate3d(${bounds.left - padding}px, ${bounds.top - padding}px, 0)`;
+      activeTarget = target;
     };
 
-    // 3. Reset to Free Mouse Mode
     const handleMouseOut = (e) => {
-      const target = e.target.closest("a, button, h1, h2, p, [data-hover='true']");
+      const target = getValidTarget(e.target);
       if (!target) return;
 
+      // The loop's point scanner handles chaining, but this catches swift clean exits safely
       isHovering = false;
+      activeTarget = null;
     };
 
-    window.addEventListener("mousemove", moveCursor, { passive: true });
+    // Attach passive listeners safely
+    window.addEventListener("mousemove", updateMouseCoords, { passive: true });
     window.addEventListener("mouseover", handleMouseOver);
     window.addEventListener("mouseout", handleMouseOut);
 
     return () => {
-      window.removeEventListener("mousemove", moveCursor);
+      cancelAnimationFrame(animationFrameId);
+      window.removeEventListener("mousemove", updateMouseCoords);
       window.removeEventListener("mouseover", handleMouseOver);
       window.removeEventListener("mouseout", handleMouseOut);
     };
@@ -63,9 +136,8 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* Structural Styles */}
       <style>{`
-        /* Deactivates standard system cursors safely across targets */
+        /* Deactivates raw OS mouse pointer rendering contexts safely over active targets */
         body, a, button, h1, h2, p, [data-hover='true'] {
           cursor: none !important;
         }
@@ -77,24 +149,24 @@ export default function CustomCursor() {
           pointer-events: none;
           z-index: 999999;
           
-          /* Hard solid background mask for brutalist text clipping */
+          /* Your exact styling parameters and mix-blend profiles preserved fully */
           background-color: #ffffff;
           mix-blend-mode: difference;
-          
-          /* Dead-sharp corners matching industrial schemas */
           border-radius: 0px; 
           
-          /* Will-change optimization tells the GPU to handle layout updates cleanly */
           will-change: transform, width, height;
           
-          /* Smooth, elastic layout transformation for sizing changes */
-          transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                      width 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-                      height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+          /* 
+            Optimized elastic tracking speed config: Ensures the cursor morphs 
+            cleanly when jumping between overlapping spinning cards.
+          */
+          transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                      width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                      height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
 
-      {/* Dynamic DOM target container */}
+      {/* Renders the single unified high-contrast tracking box context */}
       <div ref={cursorRef} className="brutalist-smart-mask" />
     </>
   );
