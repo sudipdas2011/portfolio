@@ -3,6 +3,20 @@
 }
 
 
+/* Inject directly onto the root body or universal selector */
+* {
+  -webkit-user-select: none; /* Safari and iOS mobile browsers */
+  -moz-user-select: none;    /* Old Firefox engines */
+  -ms-user-select: none;     /* IE and legacy Edge */
+  user-select: none;         /* Modern Standard browsers */
+  
+  /* Additional Brutalist Polish: Prevents native dragging of asset images */
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
