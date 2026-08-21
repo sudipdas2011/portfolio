@@ -12,7 +12,6 @@
   
   /* Additional Brutalist Polish: Prevents native dragging of asset images */
   -webkit-user-drag: none;
-  user-drag: none;
 }
 
 
