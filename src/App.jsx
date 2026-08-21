@@ -8,14 +8,13 @@ import TextRise from './components/TextRise';
 import RevolvingStage from './components/RevolvingStage';
 import './App.css';
 
-// 1. Properly import all card images using clean relative paths
-import ilumImg from './assets/cards/ilum.jpg';
-import hashImg from './assets/cards/096f041b46086a2e8fabb1bcdc0cde8b.jpg';
-import fallingImg from './assets/cards/jpn_falling.jpg';
-import rimImg from './assets/cards/rim_or_a.jpg';
-import starImg from './assets/cards/shooting_star.jpg';
-import edenImg from './assets/cards/synthetic_eden.jpg';
-import springImg from './assets/cards/spring_exhibition.jpg';
+// 1. Clean relative imports for images 1.jpg to 6.jpg
+import img1 from './assets/cards/1.jpg';
+import img2 from './assets/cards/2.jpg';
+import img3 from './assets/cards/3.jpg';
+import img4 from './assets/cards/4.jpg';
+import img5 from './assets/cards/5.jpg';
+import img6 from './assets/cards/6.jpg';
 
 export default function App() {
   const [showLoader, setShowLoader] = useState(true);
@@ -46,14 +45,13 @@ export default function App() {
               */}
               {textAnimationDone && (
                 <RevolvingStage targetId="hero-title" radius={window.innerHeight * 0.3} rpm={1.6} easeType="linear">
-                  {/* 2. Used the imported variable names inside curly braces */}
-                  <img src={ilumImg} alt="Hero" className="card-media" />
-                  <img src={hashImg} alt="Hero" className="card-media" />
-                  <img src={fallingImg} alt="Hero" className="card-media" />
-                  <img src={rimImg} alt="Hero" className="card-media" />
-                  <img src={starImg} alt="Hero" className="card-media" />
-                  <img src={edenImg} alt="Hero" className="card-media" />
-                  <img src={springImg} alt="Hero" className="card-media" />
+                  {/* 2. Passing the imported image variables into the revolving stage slots */}
+                  <img src={img1} alt="Hero" className="card-media" />
+                  <img src={img2} alt="Hero" className="card-media" />
+                  <img src={img3} alt="Hero" className="card-media" />
+                  <img src={img4} alt="Hero" className="card-media" />
+                  <img src={img5} alt="Hero" className="card-media" />
+                  <img src={img6} alt="Hero" className="card-media" />
                 </RevolvingStage>
               )}
               
