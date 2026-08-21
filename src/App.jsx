@@ -38,7 +38,7 @@ export default function App() {
               {textAnimationDone && (
                 <RevolvingStage targetId="hero-title" radius={window.innerHeight * 0.3} rpm={1.6} easeType="linear">
                   {/*<img src={heroImg} alt="Hero" className="card-media" />*/}
-                  <img src="../src/assets/cards/ilum.jpg" alt="Hero" className="card-media" />
+                  <img src="/portfolio/cards/ilum.jpg" alt="Hero" className="card-media" />
                   <img src="../src/assets/cards/096f041b46086a2e8fabb1bcdc0cde8b.jpg" alt="Hero" className="card-media" />
                   <img src="../src/assets/cards/jpn_falling.jpg" alt="Hero" className="card-media" />
                   <img src="../src/assets/cards/rim_or_a.jpg" alt="Hero" className="card-media" />
