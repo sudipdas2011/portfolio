@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 
 export default function ArrowGuide({ 
-  range = "bottom",                     // "top", "bottom", "left", "right"
-  lookAt = { x: "center", y: "bottom" }, // target focus point
-  smoothFactor = 0.12,                  // controls position responsiveness
-  trail = true,                         // TRUE = liquid noise capsules on, FALSE = entirely off
+  range = "bottom",                     
+  lookAt = { x: "center", y: "bottom" }, 
+  smoothFactor = 0.12,                  
+  trail = false,
+  allowedSections = [], // NEW: Pass selectors list here (e.g., ["#hero", ".hero-section"])
   onRangeChange,                        
   onInRange                             
 }) {
@@ -13,7 +14,6 @@ export default function ArrowGuide({
   const mouse = useRef({ x: 0, y: 0, vx: 0, vy: 0, lastX: 0, lastY: 0 });
   const arrow = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2, angle: 0, tick: 0 });
   
-  // High-density noise queue system
   const history = useRef([]);
   const maxHistoryPoints = 12; 
   
@@ -43,7 +43,6 @@ export default function ArrowGuide({
 
       arrow.current.tick += 0.4;
 
-      // Calculate velocities
       mouse.current.vx = mx - mouse.current.lastX;
       mouse.current.vy = my - mouse.current.lastY;
       mouse.current.lastX = mx;
@@ -51,11 +50,32 @@ export default function ArrowGuide({
 
       const speed = Math.sqrt(mouse.current.vx * mouse.current.vx + mouse.current.vy * mouse.current.vy);
 
+      // --- 1. DYNAMIC SECTION ALLOW-LIST MATRIX CHECK ---
+      let isInsideAllowedSection = true;
+
+      // If specific sections are specified, proactively evaluate if the cursor resides inside them
+      if (allowedSections && allowedSections.length > 0) {
+        const elementUnderMouse = document.elementFromPoint(mx, my);
+        
+        if (elementUnderMouse) {
+          // Check if the current element matches or is nested inside any allowed selector string
+          const matchingTarget = allowedSections.some(selector => 
+            elementUnderMouse.closest(selector) !== null
+          );
+          isInsideAllowedSection = matchingTarget;
+        } else {
+          isInsideAllowedSection = false;
+        }
+      }
+
+      // --- 2. EVALUATE ACTIVATION GATES ---
       let active = false;
-      if (range === "bottom" && my > sh * 0.75) active = true;
-      if (range === "top" && my < sh * 0.25) active = true;
-      if (range === "left" && mx < sw * 0.25) active = true;
-      if (range === "right" && mx > sw * 0.75) active = true;
+      if (isInsideAllowedSection) {
+        if (range === "bottom" && my > sh * 0.75) active = true;
+        if (range === "top" && my < sh * 0.25) active = true;
+        if (range === "left" && mx < sw * 0.25) active = true;
+        if (range === "right" && mx > sw * 0.75) active = true;
+      }
 
       setInsideRange(active);
 
@@ -73,55 +93,44 @@ export default function ArrowGuide({
         root.style.setProperty("--mask-opacity", "1");
       }
 
-      // --- RENDERING CANVAS CONTEXT SYSTEM ---
+      // --- Canvas Trail Draw Logic ---
       if (ctx && canvas) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // ONLY RUN CAPSULE CALCULATIONS IF THE TRAIL PROP IS ACTIVE
-        if (trail) {
+        if (trail && active) {
           if (!active && history.current.length > 0) {
             history.current.shift();
           }
-
           for (let i = 0; i < history.current.length; i++) {
             const pt = history.current[i];
             const ratio = i / history.current.length;
             const baseSize = 10 + 16 * ratio; 
-
-            const noiseFreq = 2.5;
-            const noiseAmp = 4 * (1 - ratio); 
-            const noiseX = Math.sin(i * noiseFreq + arrow.current.tick) * noiseAmp;
-            const noiseY = Math.cos(i * noiseFreq + arrow.current.tick) * noiseAmp;
-
+            const noiseX = Math.sin(i * 2.5 + arrow.current.tick) * (4 * (1 - ratio));
+            const noiseY = Math.cos(i * 2.5 + arrow.current.tick) * (4 * (1 - ratio));
             ctx.fillStyle = "#ffffff";
             ctx.beginPath();
             ctx.arc(pt.x + noiseX, pt.y + noiseY, baseSize, 0, Math.PI * 2);
             ctx.fill();
           }
         } else {
-          // Keep history purged if trail is disabled
           history.current = [];
         }
       }
 
-      // --- Arrow Physics Target Tracking ---
+      // --- Arrow Position Rendering ---
       if (containerRef.current) {
         if (active) {
           if (onInRange) onInRange({ x: mx, y: my, speed: speed });
 
           let targetX = sw / 2;
           let targetY = sh;
-
           if (typeof lookAt.x === "number") targetX = lookAt.x;
           else if (lookAt.x === "center") targetX = sw / 2;
-
           if (typeof lookAt.y === "number") targetY = lookAt.y;
           else if (lookAt.y === "bottom") targetY = sh;
-          else if (lookAt.y === "top") targetY = 0;
+          if (lookAt.y === "top") targetY = 0;
 
           const angleToTarget = Math.atan2(targetY - my, targetX - mx);
           const angleToVelocity = speed > 1.5 ? Math.atan2(mouse.current.vy, mouse.current.vx) : angleToTarget;
-
           const velocityWeight = Math.min(speed / 25, 0.85); 
           
           let diff = angleToVelocity - angleToTarget;
@@ -144,7 +153,6 @@ export default function ArrowGuide({
         } else {
           arrow.current.x = mx;
           arrow.current.y = my;
-          
           containerRef.current.style.transform = `translate3d(${mx}px, ${my}px, 0) rotate(${arrow.current.angle}deg) scale(0)`;
           containerRef.current.style.opacity = "0";
         }
@@ -156,13 +164,9 @@ export default function ArrowGuide({
     const trackMouse = (e) => {
       mouse.current.x = e.clientX;
       mouse.current.y = e.clientY;
-
-      // Only push coordinate data into the queue if the trail option is true
       if (trail && mouse.current.y > window.innerHeight * 0.75) { 
         history.current.push({ x: arrow.current.x, y: arrow.current.y });
-        if (history.current.length > maxHistoryPoints) {
-          history.current.shift();
-        }
+        if (history.current.length > maxHistoryPoints) history.current.shift();
       }
     };
 
@@ -176,7 +180,7 @@ export default function ArrowGuide({
       document.documentElement.style.removeProperty("--mask-clip-override");
       document.documentElement.style.setProperty("--mask-opacity", "1");
     };
-  }, [range, lookAt, smoothFactor, trail, onRangeChange, onInRange]);
+  }, [range, lookAt, smoothFactor, trail, allowedSections, onRangeChange, onInRange]);
 
   return (
     <>
@@ -202,8 +206,6 @@ export default function ArrowGuide({
           mix-blend-mode: difference;
           filter: url(#brutalist-gooey-noise-matrix);
           background-color: transparent;
-          
-          /* Hides the entire canvas system wrapper if the trail boolean is set to false */
           display: ${trail ? "block" : "none"};
         }
 
@@ -217,7 +219,6 @@ export default function ArrowGuide({
           height: 34px;
           margin-left: -17px;
           margin-top: -17px;
-          
           mix-blend-mode: difference;
           opacity: 0;
           will-change: transform, opacity;
@@ -229,14 +230,7 @@ export default function ArrowGuide({
         <defs>
           <filter id="brutalist-gooey-noise-matrix">
             <feGaussianBlur in="SourceGraphic" stdDeviation="11" result="blur" />
-            <feColorMatrix 
-              in="blur" 
-              mode="matrix" 
-              values="1 0 0 0 0  
-                      0 1 0 0 0  
-                      0 0 1 0 0  
-                      0 0 0 35 -11" 
-            />
+            <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 35 -11" />
           </filter>
         </defs>
       </svg>
