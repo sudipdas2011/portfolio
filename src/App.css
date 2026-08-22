@@ -99,7 +99,7 @@ body, html {
 
 .hero-heading {
   /* 1. Enforces the responsive clearance boundary reference */
-  max-width: var(--text-clearance-width*1.6);
+  max-width: calc(var(--text-clearance-width) * 1.6);
   width: 100%;
   
   /* 2. Derives an auto-scaling font size based proportionally on the radius variable */
