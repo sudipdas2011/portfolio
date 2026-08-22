@@ -109,7 +109,7 @@ export default function RevolvingStage({
                 <motion.div 
                   style={{
                     rotate: inverseRotation,
-                    width: `${0.7 * Math.min(window.innerWidth, window.innerHeight) * 0.3}px`
+                    width: `${0.7 * Math.min(window.innerWidth, window.innerHeight) * 0.2}px`
                    }}
                   className="brutalist-43-card"
 
