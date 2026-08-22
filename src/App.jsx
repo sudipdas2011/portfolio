@@ -8,6 +8,7 @@ import CustomCursor from './components/CustomCursor';
 import BrutalistLoader from './components/BrutalistLoader';
 import TextRise from './components/TextRise';
 import RevolvingStage from './components/RevolvingStage';
+import ArrowGuide from './components/ArrowGuide';
 import './App.css';
 
 import img1 from './assets/cards/1.jpg';
@@ -28,6 +29,7 @@ export default function App() {
 
   return (
     <>
+      <ArrowGuide range="bottom" lookAt={{ x: "center", y: "bottom" }} />
       <CustomCursor />
       {showLoader ? (
         // 2. You can optionally pass the `percent` state down to BrutalistLoader if it supports a text counter

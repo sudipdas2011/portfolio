@@ -1,24 +1,35 @@
 import React, { useEffect, useState, useRef } from "react";
 
 export default function ArrowGuide({ 
-  range = "bottom",    // screen sectors: "top", "bottom", "left", "right"
-  lookAt = { x: "center", y: "bottom" } // focal targets: "center", "top", "bottom" or raw pixel coordinates
+  range = "bottom",                     // "top", "bottom", "left", "right"
+  lookAt = { x: "center", y: "bottom" }, // target focus point
+  smoothFactor = 0.12,                   // lower = smoother/draggier layout movement
+  onInRange
 }) {
   const [isActive, setIsActive] = useState(false);
-  const [arrowStyle, setArrowStyle] = useState({ transform: "translate3d(-100px, -100px, 0) rotate(0deg)", opacity: 0 });
-  const mouseCoords = useRef({ x: 0, y: 0 });
+  
+  const mouse = useRef({ x: 0, y: 0, vx: 0, vy: 0, lastX: 0, lastY: 0 });
+  const arrow = useRef({ x: 0, y: 0, angle: 0 });
+  const containerRef = useRef(null);
 
   useEffect(() => {
-    // 1. high-performance render frame loop tracker
     let animationFrameId;
 
-    const runGuideCalculation = () => {
-      const mx = mouseCoords.current.x;
-      const my = mouseCoords.current.y;
+    const runPhysicsLoop = () => {
+      const mx = mouse.current.x;
+      const my = mouse.current.y;
       const sw = window.innerWidth;
       const sh = window.innerHeight;
 
-      // 2. automated trigger range evaluation matrix
+      // 1. Calculate active pointer speed vectors
+      mouse.current.vx = mx - mouse.current.lastX;
+      mouse.current.vy = my - mouse.current.lastY;
+      mouse.current.lastX = mx;
+      mouse.current.lastY = my;
+
+      const speed = Math.sqrt(mouse.current.vx * mouse.current.vx + mouse.current.vy * mouse.current.vy);
+
+      // 2. Evaluate active visibility boundaries
       let insideRange = false;
       if (range === "bottom" && my > sh * 0.75) insideRange = true;
       if (range === "top" && my < sh * 0.25) insideRange = true;
@@ -27,92 +38,124 @@ export default function ArrowGuide({
 
       setIsActive(insideRange);
 
-      // notify your master custom cursor element to hide its shape when active
+      // FIXED TRANSITION SNAP: Uses clip-path to mask out the visibility instead of breaking structural layout width/height properties
       const root = document.documentElement;
       if (insideRange) {
-        root.style.setProperty("--mask-opacity", "0"); // hides your default 15px box shape smoothly
+        root.style.setProperty("--mask-clip-override", "polygon(0 0, 0 0, 0 0, 0 0)");
+        root.style.setProperty("--mask-opacity", "0");
       } else {
+        root.style.removeProperty("--mask-clip-override");
         root.style.setProperty("--mask-opacity", "1");
       }
 
-      if (insideRange) {
-        // 3. focal destination screen coordinates resolver
-        let targetX = sw / 2;
-        let targetY = sh; // default bottom center fallback
+      if (containerRef.current) {
+        if (insideRange) {
 
-        if (typeof lookAt.x === "number") targetX = lookAt.x;
-        else if (lookAt.x === "center") targetX = sw / 2;
+          //Fires a callback on evry frame if cursor in rannge
+          if (onInRange) onInRange({ x: mx, y: my, speed: speed });
 
-        if (typeof lookAt.y === "number") targetY = lookAt.y;
-        else if (lookAt.y === "bottom") targetY = sh;
-        else if (lookAt.y === "top") targetY = 0;
+          // 3. Resolve target focus lookAt coordinates
+          let targetX = sw / 2;
+          let targetY = sh;
 
-        // 4. brutalist trigonometry lookat calculation vector
-        const radians = Math.atan2(targetY - my, targetX - mx);
-        const degrees = radians * (180 / Math.PI);
+          if (typeof lookAt.x === "number") targetX = lookAt.x;
+          else if (lookAt.x === "center") targetX = sw / 2;
 
-        setArrowStyle({
-          transform: `translate3d(${mx}px, ${my}px, 0) rotate(${degrees}deg)`,
-          opacity: 1
-        });
-      } else {
-        setArrowStyle(prev => ({ ...prev, opacity: 0 }));
+          if (typeof lookAt.y === "number") targetY = lookAt.y;
+          else if (lookAt.y === "bottom") targetY = sh;
+          else if (lookAt.y === "top") targetY = 0;
+
+          // 4. Compute layout directional angles
+          const angleToTarget = Math.atan2(targetY - my, targetX - mx);
+          const angleToVelocity = speed > 1.5 ? Math.atan2(mouse.current.vy, mouse.current.vx) : angleToTarget;
+
+          const velocityWeight = Math.min(speed / 25, 0.85); 
+          
+          let diff = angleToVelocity - angleToTarget;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          
+          const idealAngleRad = angleToTarget + diff * velocityWeight;
+          let idealAngleDeg = idealAngleRad * (180 / Math.PI);
+
+          // 5. Apply fluid spring easing interpolation vectors
+          arrow.current.x += (mx - arrow.current.x) * smoothFactor;
+          arrow.current.y += (my - arrow.current.y) * smoothFactor;
+
+          let angleDiff = idealAngleDeg - arrow.current.angle;
+          while (angleDiff < -180) angleDiff += 360;
+          while (angleDiff > 180) angleDiff -= 360;
+          arrow.current.angle += angleDiff * smoothFactor;
+
+          // Execute rendering transformations on the viewport
+          containerRef.current.style.transform = `translate3d(${arrow.current.x}px, ${arrow.current.y}px, 0) rotate(${arrow.current.angle}deg) scale(1)`;
+          containerRef.current.style.opacity = "1";
+        } else {
+          // If you exit the active boundary range, ease position down and scale out smoothly
+          arrow.current.x += (mx - arrow.current.x) * smoothFactor;
+          arrow.current.y += (my - arrow.current.y) * smoothFactor;
+          
+          containerRef.current.style.transform = `translate3d(${arrow.current.x}px, ${arrow.current.y}px, 0) rotate(${arrow.current.angle}deg) scale(0)`;
+          containerRef.current.style.opacity = "0";
+        }
       }
 
-      animationFrameId = requestAnimationFrame(runGuideCalculation);
+      animationFrameId = requestAnimationFrame(runPhysicsLoop);
     };
 
-    const captureCoords = (e) => {
-      mouseCoords.current = { x: e.clientX, y: e.clientY };
+    const trackMouse = (e) => {
+      mouse.current.x = e.clientX;
+      mouse.current.y = e.clientY;
     };
 
-    window.addEventListener("mousemove", captureCoords, { passive: true });
-    animationFrameId = requestAnimationFrame(runGuideCalculation);
+    window.addEventListener("mousemove", trackMouse, { passive: true });
+    animationFrameId = requestAnimationFrame(runPhysicsLoop);
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener("mousemove", captureCoords);
+      window.removeEventListener("mousemove", trackMouse);
+      root.style.removeProperty("--mask-clip-override");
       document.documentElement.style.setProperty("--mask-opacity", "1");
     };
-  }, [range, lookAt]);
+  }, [range, lookAt, smoothFactor]);
 
   return (
     <>
       <style>{`
-        /* dynamically tells your custom cursor mask div to fade when arrow is active */
+        /* FIXED: Controls visibility rendering using hardware clip-paths without destroying layout width and height tracking */
         .brutalist-smart-mask {
           opacity: var(--mask-opacity, 1) !important;
-          transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), 
-                      transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), 
-                      width 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+          clip-path: var(--mask-clip-override, polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)) !important;
+          transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                      opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                      clip-path 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                      width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                       height 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
 
-        /* 5. structural layout configuration for the takeover svg arrow pointer */
-        .brutalist-arrow-pointer {
+        .brutalist-fluid-arrow {
           position: fixed;
           top: 0;
           left: 0;
           pointer-events: none;
           z-index: 9999999;
-          width: 32px;
-          height: 32px;
+          width: 34px;
+          height: 34px;
+          margin-left: -17px;
+          margin-top: -17px;
           
-          /* anchors center of rotation straight onto your real hidden mouse coordinate tip */
-          margin-left: -16px;
-          margin-top: -16px;
+          mix-blend-mode: difference;
+          opacity: 0;
           
-          mix-blend-mode: difference; /* matches your exact core invert coloring style */
           will-change: transform, opacity;
-          transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
 
       <div 
-        className="brutalist-arrow-pointer" 
-        style={arrowStyle}
+        ref={containerRef}
+        className="brutalist-fluid-arrow"
       >
-        {/* clean industrial raw geometric guide svg arrow geometry */}
         <svg 
           viewBox="0 0 24 24" 
           width="100%" 

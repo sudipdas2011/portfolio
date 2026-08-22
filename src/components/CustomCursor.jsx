@@ -140,6 +140,9 @@ export default function CustomCursor() {
           left: 0;
           pointer-events: none;
           z-index: 999999;
+
+          //for ARROW GUIDING...
+          opacity: var(--mask-opacity, 1) !important; 
           
           /* Your exact styling parameters and mix-blend profiles preserved fully */
           background-color: #ffffff;
