@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 
-// --- 1. THE WRAPPER TAG COMPONENT ---
 export function CursorEnlarge({ children, className = "", style = {} }) {
   return (
     <div
@@ -13,7 +12,6 @@ export function CursorEnlarge({ children, className = "", style = {} }) {
   );
 }
 
-// --- 2. THE FINALIZED REFACTORED CUSTOM CURSOR ENGINE ---
 export default function CustomCursor() {
   const cursorRef = useRef(null);
 
@@ -41,9 +39,7 @@ export default function CustomCursor() {
       return element.closest("a, button, h1, h2, p, [data-hover='true']");
     };
 
-    // --- HIGH-PERFORMANCE PROACTIVE RENDER LOOP ---
     const renderLoop = () => {
-      // 1. SPATIAL INTERSECTION CHECK
       if (isHovering && activeTarget) {
         const bounds = activeTarget.getBoundingClientRect();
         
@@ -54,7 +50,6 @@ export default function CustomCursor() {
           mouseY < bounds.top ||
           mouseY > bounds.bottom
         ) {
-          // --- PROACTIVE SCANNING ENHANCEMENT ---
           // Scan the exact point under the pointer to see if another card has rotated into place
           const elementUnderMouse = document.elementFromPoint(mouseX, mouseY);
           const nextTarget = getValidTarget(elementUnderMouse);
@@ -69,7 +64,6 @@ export default function CustomCursor() {
           }
         }
       } else if (!isHovering) {
-        // CONTINUOUS BACKGROUND PROACTIVE SCAN
         // If the cursor is free but cards are spinning under a static mouse pointer, catch them instantly
         const elementUnderMouse = document.elementFromPoint(mouseX, mouseY);
         const autoTarget = getValidTarget(elementUnderMouse);
@@ -80,7 +74,6 @@ export default function CustomCursor() {
         }
       }
 
-      // 2. LAYOUT ENGINE RENDERING DRAWS
       if (!isHovering || !activeTarget) {
         // STATE A: Free Mouse Tracking (Snaps box back to default pointer coordinates)
         cursor.style.width = `${defaultSize}px`;
@@ -103,7 +96,6 @@ export default function CustomCursor() {
     // Kick off the loop thread
     animationFrameId = requestAnimationFrame(renderLoop);
 
-    // --- STANDARD NATIVE FALLBACK HANDLERS ---
     const handleMouseOver = (e) => {
       const target = getValidTarget(e.target);
       if (!target) return;

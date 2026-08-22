@@ -1,20 +1,16 @@
-.portfolio-content,
-.hero-section,
-.center-stage,
-#hero-title {
-  border: none !important;
-  border-left: none !important;
-  outline: none !important;
+:root {
+  /* 1. This computes your exact base screen radius factor dynamically */
+  --min-screen-dimension: min(1vw, 1vh);
+  
+  /* 2. Matches your JS code: window.min * 0.21 */
+  --orbit-radius: calc(var(--min-screen-dimension) * 21);
+  
+  /* 3. The maximum inner safety boundary box for text (2x Radius with a safety padding gap) */
+  --text-clearance-width: calc(var(--orbit-radius) * 1.7);
 }
 
-.portfolio-content {
-  width: 100vw;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
-}
 
+/* ─── GLOBAL RESET & CANVAS FIXES ─── */
 body, html {
   margin: 0;
   padding: 0;
@@ -25,21 +21,45 @@ body, html {
   font-family: sans-serif;
 }
 
+/* ─── PORTFOLIO MAIN WRAPPER ─── */
 .portfolio-content {
-  background-color: #ffffff;
-  min-height: 100vh;
   width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #ffffff;
   display: flex;
   justify-content: center;
   align-items: center;
+  
+  /* fixes the unselectable focus border bug found by devtools */
+  border: 0px none transparent !important;
+  border-left: 0px none transparent !important;
+  outline: none !important;
+  outline-width: 0px !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
+/* active state styling overrides to prevent any selection outline traces */
+.portfolio-content:focus,
+.portfolio-content:active,
+.portfolio-content:focus-visible {
+  outline: none !important;
+  outline-width: 0px !important;
+  box-shadow: none !important;
+}
+
+/* ─── HERO HERO LAYOUT SECTIONS ─── */
 .hero-section {
   width: 100%;
   height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  border: none !important;
+  outline: none !important;
 }
 
 .center-stage {
@@ -48,29 +68,51 @@ body, html {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  border: none !important;
+  outline: none !important;
 }
 
 /* ─── TEXT FOREGROUND LAYER ─── */
 #hero-title {
   position: relative;
-  z-index: 5; /*  High index forces text out over the top of the cards */
+  z-index: 5; /* High index forces text out over the top of the cards */
   pointer-events: none; /* Mouse moves pass through white space directly down to cards */
+  border: none !important;
+  outline: none !important;
 }
 
 .hero-heading {
-  font-size: 5.5rem;
+  /* 1. Enforces the responsive clearance boundary reference */
+  max-width: var(--text-clearance-width);
+  width: 100%;
+  
+  /* 2. Derives an auto-scaling font size based proportionally on the radius variable */
+  font-size: calc(var(--orbit-radius) * 0.38); 
+  
+  /* 3. Layout alignments */
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  white-space: nowrap; 
+
+  /* Your original preservation styles */
   font-weight: 500;
   color: #000000;
   letter-spacing: -0.03em;
-  margin: 0;
   line-height: 1;
-  pointer-events: auto; /* Restores mouse hover targeting on letters */
+  pointer-events: auto; 
 }
+
+
 
 /* ─── CARD BACKGROUND LAYER ─── */
 .revolving-stage-container {
-  z-index: 1; /*  Low index places the entire orbit circle underneath text */
+  z-index: 1; /* Low index places the entire orbit circle underneath text */
   pointer-events: none;
+  border-left: none !important;
+  outline: none !important;
+  width: 0px !important;
+  height: 0px !important;
 }
 
 .revolving-card-wrapper {
@@ -78,12 +120,10 @@ body, html {
 }
 
 .brutalist-43-card {
-  width: 130px;
   aspect-ratio: 3 / 4;
   filter: invert(100%);
   background-color: #ffffff;
   border: 1px solid #ffffff;
-  /*box-shadow: 4px 4px 0px #000000;*/
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -114,3 +154,13 @@ body, html {
   color: #000000;
 }
 
+/* ─── UNIVERSAL SELECTION WIPE ─── */
+/* prevents the browser from showing selection highlights across elements */
+*::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+*::-moz-selection {
+  background: transparent !important;
+  color: inherit !important;
+}

@@ -6,7 +6,7 @@ export default function BrutalistLoader({ onComplete, debug = false }) {
   useEffect(() => {
     // Start our high-precision performance timestamp anchor
     const startTime = performance.now();
-    console.log("⏱️ [Loader] Engine initialized. Tracking network waterfall...");
+    console.log("[Loader] Engine initialized. Tracking network waterfall...");
 
     if (debug) {
       setProgress(65);
@@ -28,13 +28,13 @@ export default function BrutalistLoader({ onComplete, debug = false }) {
     const triggerExit = () => {
       const endTime = performance.now();
       const activeDurationMs = (endTime - startTime).toFixed(2);
-      console.log(`⏱️ [Loader] Closed. Total active duration on screen: ${activeDurationMs}ms`);
+      console.log(`[Loader] Closed. Total active duration on screen: ${activeDurationMs}ms`);
       if (onComplete) onComplete();
     };
 
     // Paced fallback tracker if assets loaded instantly before React booted up
     const runPacedFallback = () => {
-      console.log("⚡ [Loader] Assets cached or loaded early. Running micro-paced layout sequence.");
+      console.log("[Loader] Assets cached or loaded early. Running micro-paced layout sequence.");
       let currentFake = 0;
       const interval = setInterval(() => {
         currentFake += 1; // Increments smoothly by 5%

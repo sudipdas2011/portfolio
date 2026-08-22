@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import useAssetLoader from './hooks/useAssetLoader'; // Adjust path based on your folder structure
+import { useState, useSyncExternalStore  } from 'react';
+import useAssetLoader from './hooks/useAssetLoader'; 
 
 import reactLogo from './assets/react.svg';
 import viteLogo from './assets/vite.svg';
@@ -53,7 +53,7 @@ export default function App() {
               {textAnimationDone && (
                 <RevolvingStage 
                   targetId="hero-title" 
-                  radius={window.innerHeight * 0.3} 
+                  radius={Math.min(window.innerWidth, window.innerHeight) * 0.3}
                   rpm={1.6} 
                   easeType="linear"
                 >

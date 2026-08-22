@@ -6,7 +6,8 @@ import { CursorEnlarge } from './CustomCursor'; // Strictly imported the wrapper
 export default function RevolvingStage({ 
   children, 
   targetId, 
-  radius = 200, 
+  radius = 200,
+  size = 10, 
   rpm = 3,          
   easeType = "linear" 
 }) {
@@ -106,8 +107,12 @@ export default function RevolvingStage({
               {/* 4. Apply the inverse motion variable style. */}
               <MagneticPull>
                 <motion.div 
-                  style={{ rotate: inverseRotation }}
+                  style={{
+                    rotate: inverseRotation,
+                    width: `${0.7 * Math.min(window.innerWidth, window.innerHeight) * 0.3}px`
+                   }}
                   className="brutalist-43-card"
+
                 >
                   {/* 
                     INTEGRATED ENLARGEMENT WRAPPER SYSTEM:

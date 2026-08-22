@@ -3,14 +3,13 @@
 }
 
 
-/* Inject directly onto the root body or universal selector */
 * {
-  -webkit-user-select: none; /* Safari and iOS mobile browsers */
-  -moz-user-select: none;    /* Old Firefox engines */
-  -ms-user-select: none;     /* IE and legacy Edge */
-  user-select: none;         /* Modern Standard browsers */
+  -webkit-user-select: none; 
+  -moz-user-select: none;    
+  -ms-user-select: none;     
+  user-select: none;         
   
-  /* Additional Brutalist Polish: Prevents native dragging of asset images */
+  
   -webkit-user-drag: none;
 }
 
@@ -73,16 +72,19 @@ body {
 }
 
 #root {
-  width: 1126px;
+  /* CHANGE: Change the fixed 1126px to fill the full monitor canvas width */
+  width: 100vw;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0;
+  
   text-align: center;
-  border-inline: 1px solid var(--border);
+  border-inline: none !important; 
   min-height: 100svh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
+
 
 h1,
 h2 {
