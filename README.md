@@ -1,3 +1,5 @@
+# !! NOTE: THIS PROJECT IS CURRENTLY UNFINISHED / WORK IN PROGRESS FOR VOTE REVIEW !!
+
 # HI ツ
 ### This is my creative artist portfolio built for the Stardance Challenge by HackClub.
 <p align="center">
