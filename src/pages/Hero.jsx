@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TextRise from '../components/TextRise';
 import Orbit from '../components/Orbit';
 import Arrow from '../components/Arrow';
-
 import img1 from '../assets/cards/1.jpg';
 import img2 from '../assets/cards/2.jpg';
 import img3 from '../assets/cards/3.jpg';

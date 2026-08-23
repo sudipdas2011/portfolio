@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import TextRise from '../components/TextRise';
 
 export default function WhoAmI() {

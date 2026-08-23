@@ -9,11 +9,9 @@ export default function Arrow({
   onChange,
   onMove,
 }) {
-  const cursor = useRef({
+  const mouse = useRef({
     x: 0,
     y: 0,
-    vx: 0,
-    vy: 0,
     lastX: 0,
     lastY: 0,
   });
@@ -22,19 +20,18 @@ export default function Arrow({
     x: window.innerWidth / 2,
     y: window.innerHeight / 2,
     angle: 0,
-    tick: 0,
   });
 
   const points = useRef([]);
   const arrowRef = useRef(null);
   const canvasRef = useRef(null);
-  const lastActive = useRef(false);
+  const activeRef = useRef(false);
 
   useEffect(() => {
-    let frame;
-
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
+
+    let frame;
 
     const resize = () => {
       if (!canvas) return;
@@ -43,28 +40,39 @@ export default function Arrow({
       canvas.height = window.innerHeight;
     };
 
+    const move = (e) => {
+      mouse.current.x = e.clientX;
+      mouse.current.y = e.clientY;
+
+      if (trail && e.clientY > window.innerHeight * 0.75) {
+        points.current.push({
+          x: arrow.current.x,
+          y: arrow.current.y,
+        });
+
+        if (points.current.length > 12) {
+          points.current.shift();
+        }
+      }
+    };
+
     const update = () => {
-      const mx = cursor.current.x;
-      const my = cursor.current.y;
+      const { x, y, lastX, lastY } = mouse.current;
       const width = window.innerWidth;
       const height = window.innerHeight;
 
-      arrow.current.tick += 0.4;
+      const vx = x - lastX;
+      const vy = y - lastY;
+      const speed = Math.hypot(vx, vy);
 
-      cursor.current.vx = mx - cursor.current.lastX;
-      cursor.current.vy = my - cursor.current.lastY;
-      cursor.current.lastX = mx;
-      cursor.current.lastY = my;
-
-      const speed = Math.hypot(
-        cursor.current.vx,
-        cursor.current.vy
-      );
+      mouse.current.lastX = x;
+      mouse.current.lastY = y;
 
       let allowed = true;
 
       if (sections.length) {
-        const target = document.elementFromPoint(mx, my);
+        const target = document.elementFromPoint(x, y);
+
         allowed = target
           ? sections.some((selector) => target.closest(selector))
           : false;
@@ -73,15 +81,15 @@ export default function Arrow({
       let active = false;
 
       if (allowed) {
-        if (range === 'bottom') active = my > height * 0.75;
-        if (range === 'top') active = my < height * 0.25;
-        if (range === 'left') active = mx < width * 0.25;
-        if (range === 'right') active = mx > width * 0.75;
+        if (range === 'bottom') active = y > height * 0.75;
+        if (range === 'top') active = y < height * 0.25;
+        if (range === 'left') active = x < width * 0.25;
+        if (range === 'right') active = x > width * 0.75;
       }
 
-      if (onChange && active !== lastActive.current) {
-        onChange(active);
-        lastActive.current = active;
+      if (active !== activeRef.current) {
+        activeRef.current = active;
+        onChange?.(active);
       }
 
       const root = document.documentElement;
@@ -101,28 +109,20 @@ export default function Arrow({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         if (trail && active) {
-          for (let i = 0; i < points.current.length; i++) {
-            const point = points.current[i];
-            const ratio = i / points.current.length;
-            const size = 10 + 16 * ratio;
+          points.current.forEach((point, i) => {
+            const size = 10 + i * 1.2;
 
-            const noiseX =
-              Math.sin(i * 2.5 + arrow.current.tick) * 4 * (1 - ratio);
-
-            const noiseY =
-              Math.cos(i * 2.5 + arrow.current.tick) * 4 * (1 - ratio);
-
-            ctx.fillStyle = '#ffffff';
+            ctx.fillStyle = '#fff';
             ctx.beginPath();
             ctx.arc(
-              point.x + noiseX,
-              point.y + noiseY,
+              point.x,
+              point.y,
               size,
               0,
               Math.PI * 2
             );
             ctx.fill();
-          }
+          });
         } else {
           points.current = [];
         }
@@ -133,63 +133,76 @@ export default function Arrow({
       if (el) {
         if (active) {
           onMove?.({
-            x: mx,
-            y: my,
+            x,
+            y,
             speed,
           });
 
           let targetX = width / 2;
           let targetY = height;
 
-          if (typeof lookAt.x === 'number') targetX = lookAt.x;
-          if (lookAt.x === 'center') targetX = width / 2;
+          if (typeof lookAt.x === 'number') {
+            targetX = lookAt.x;
+          } else if (lookAt.x === 'left') {
+            targetX = 0;
+          } else if (lookAt.x === 'right') {
+            targetX = width;
+          }
 
-          if (typeof lookAt.y === 'number') targetY = lookAt.y;
-          if (lookAt.y === 'bottom') targetY = height;
-          if (lookAt.y === 'top') targetY = 0;
+          if (typeof lookAt.y === 'number') {
+            targetY = lookAt.y;
+          } else if (lookAt.y === 'top') {
+            targetY = 0;
+          } else if (lookAt.y === 'bottom') {
+            targetY = height;
+          }
 
           const targetAngle = Math.atan2(
-            targetY - my,
-            targetX - mx
+            targetY - y,
+            targetX - x
           );
 
-          const velocityAngle =
+          const moveAngle =
             speed > 1.5
-              ? Math.atan2(cursor.current.vy, cursor.current.vx)
+              ? Math.atan2(vy, vx)
               : targetAngle;
 
-          const weight = Math.min(speed / 25, 0.85);
+          let angle = targetAngle;
 
-          let diff = velocityAngle - targetAngle;
+          if (speed > 1.5) {
+            angle =
+              targetAngle * 0.7 +
+              moveAngle * 0.3;
+          }
 
-          if (diff < -Math.PI) diff += Math.PI * 2;
-          if (diff > Math.PI) diff -= Math.PI * 2;
+          const degrees = angle * (180 / Math.PI);
 
-          const angle =
-            targetAngle + diff * weight;
+          let diff = degrees - arrow.current.angle;
 
-          let degrees = angle * (180 / Math.PI);
-          let angleDiff = degrees - arrow.current.angle;
+          if (diff > 180) diff -= 360;
+          if (diff < -180) diff += 360;
 
-          if (angleDiff < -180) angleDiff += 360;
-          if (angleDiff > 180) angleDiff -= 360;
+          arrow.current.x +=
+            (x - arrow.current.x) * smooth;
 
-          arrow.current.x += (mx - arrow.current.x) * smooth;
-          arrow.current.y += (my - arrow.current.y) * smooth;
-          arrow.current.angle += angleDiff * smooth;
+          arrow.current.y +=
+            (y - arrow.current.y) * smooth;
+
+          arrow.current.angle += diff * smooth;
 
           el.style.transform =
             `translate3d(${arrow.current.x}px, ${arrow.current.y}px, 0) ` +
-            `rotate(${arrow.current.angle}deg) scale(1)`;
+            `rotate(${arrow.current.angle}deg)`;
 
           el.style.opacity = '1';
         } else {
-          arrow.current.x = mx;
-          arrow.current.y = my;
+          arrow.current.x = x;
+          arrow.current.y = y;
 
           el.style.transform =
-            `translate3d(${mx}px, ${my}px, 0) ` +
-            `rotate(${arrow.current.angle}deg) scale(0)`;
+            `translate3d(${x}px, ${y}px, 0) ` +
+            `rotate(${arrow.current.angle}deg) ` +
+            `scale(0)`;
 
           el.style.opacity = '0';
         }
@@ -198,33 +211,16 @@ export default function Arrow({
       frame = requestAnimationFrame(update);
     };
 
-    const move = (event) => {
-      cursor.current.x = event.clientX;
-      cursor.current.y = event.clientY;
-
-      if (trail && cursor.current.y > window.innerHeight * 0.75) {
-        points.current.push({
-          x: arrow.current.x,
-          y: arrow.current.y,
-        });
-
-        if (points.current.length > 12) {
-          points.current.shift();
-        }
-      }
-    };
-
     resize();
 
     window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', move, {
-      passive: true,
-    });
+    window.addEventListener('mousemove', move);
 
     frame = requestAnimationFrame(update);
 
     return () => {
       cancelAnimationFrame(frame);
+
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', move);
 
@@ -260,6 +256,7 @@ export default function Arrow({
               stdDeviation="11"
               result="blur"
             />
+
             <feColorMatrix
               in="blur"
               mode="matrix"
@@ -273,18 +270,27 @@ export default function Arrow({
         <canvas ref={canvasRef} />
       </div>
 
-      <div ref={arrowRef} className="arrow">
+      <div
+        ref={arrowRef}
+        className="arrow"
+      >
         <svg
           viewBox="0 0 24 24"
           width="100%"
           height="100%"
           fill="none"
-          stroke="#ffffff"
+          stroke="#fff"
           strokeWidth="2.5"
           strokeLinecap="square"
           strokeLinejoin="miter"
         >
-          <line x1="2" y1="12" x2="22" y2="12" />
+          <line
+            x1="2"
+            y1="12"
+            x2="22"
+            y2="12"
+          />
+
           <polyline points="14 4 22 12 14 20" />
         </svg>
       </div>
