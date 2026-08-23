@@ -71,9 +71,7 @@ export default function Hero() {
           });
         }}
       >
-        <span className="scroll-arrow">↓</span>
         <span>SCROLL TO EXPLORE</span>
-        <span className="scroll-arrow">↓</span>
       </button>
     </main>
   );
