@@ -4,8 +4,8 @@ import useAssetLoader from './hooks/useAssetLoader';
 import reactLogo from './assets/react.svg';
 import viteLogo from './assets/vite.svg';
 import heroImg from './assets/hero.png';
-import CustomCursor from './components/CustomCursor';
-import BrutalistLoader from './components/BrutalistLoader';
+import Cursor from './components/Cursor';
+import Loader from './components/Loader';
 import Hero from './pages/Hero'; 
 import WhoAmI from './pages/WhoAmI'; 
 import './App.css';
@@ -28,10 +28,10 @@ export default function App() {
         The CustomCursor remains global across the whole website view tree layer,
         but ArrowGuide has been cleanly purged from this root scope.
       */}
-      <CustomCursor />
+      <Cursor />
       
       {showLoader ? (
-        <BrutalistLoader onComplete={handleLoaderComplete} debug={false} progress={percent} />
+        <Loader onComplete={handleLoaderComplete} debug={false} progress={percent} />
       ) : (
         <div className="portfolio-content">
           <Hero />

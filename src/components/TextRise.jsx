@@ -1,61 +1,65 @@
 import { motion } from 'framer-motion';
 
-export default function TextRise({ text, className = "", onComplete }) {
-  const containerVariants = {
+export default function TextRise({
+  text,
+  className = '',
+  onComplete,
+}) {
+  const wrap = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.06, 
+        staggerChildren: 0.06,
       },
     },
   };
 
-  const letterVariants = {
-    hidden: { 
-      y: "110%", // Pushes it completely out of view below the line
-      opacity: 0 
+  const letter = {
+    hidden: {
+      y: '110%',
+      opacity: 0,
     },
-    visible: { 
-      y: "0%", 
+    visible: {
+      y: '0%',
       opacity: 1,
-      transition: { 
-        duration: 0.6, 
-        ease: [0.2, 0.65, 0.3, 0.9] 
-      } 
+      transition: {
+        duration: 0.6,
+        ease: [0.2, 0.65, 0.3, 0.9],
+      },
     },
   };
 
   return (
-    <motion.span 
+    <motion.span
       className={className}
-      variants={containerVariants}
+      variants={wrap}
       initial="hidden"
       animate="visible"
-      onAnimationComplete={onComplete} // Triggers when the final letter finishes rising
-      style={{ 
-        display: 'inline-flex', 
+      onAnimationComplete={onComplete}
+      style={{
+        display: 'inline-flex',
         flexWrap: 'wrap',
-        paddingTop: '0.2em',    // Prevents clipping at the top
-        paddingBottom: '0.2em', // Prevents clipping at the bottom
-        overflow: 'hidden'
+        paddingTop: '0.2em',
+        paddingBottom: '0.2em',
+        overflow: 'hidden',
       }}
     >
-      {text.split("").map((char, index) => (
+      {text.split('').map((char, i) => (
         <span
-          key={index}
-          style={{ 
+          key={i}
+          style={{
             display: 'inline-block',
-            overflow: 'hidden', // Each individual letter handles its own clip line
+            overflow: 'hidden',
             verticalAlign: 'bottom',
-            whiteSpace: char === " " ? "pre" : "normal"
+            whiteSpace: char === ' ' ? 'pre' : 'normal',
           }}
         >
           <motion.span
-            variants={letterVariants}
-            style={{ 
+            variants={letter}
+            style={{
               display: 'inline-block',
-              lineHeight: '1'
+              lineHeight: '1',
             }}
           >
             {char}

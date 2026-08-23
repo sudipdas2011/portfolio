@@ -1,81 +1,74 @@
 :root {
-  /* 1. This computes your exact base screen radius factor dynamically */
   --min-screen-dimension: min(1vw, 1vh);
-  
-  /* 2. Matches your JS code: window.min * 0.21 */
   --orbit-radius: calc(var(--min-screen-dimension) * 21);
-  
-  /* 3. The maximum inner safety boundary box for text (2x Radius with a safety padding gap) */
   --text-clearance-width: calc(var(--orbit-radius) * 1.7);
 }
 
-
-/* ─── GLOBAL RESET & CANVAS FIXES ─── */
-body, html {
+html,
+body {
   margin: 0;
   padding: 0;
   width: 100%;
   height: 100%;
-  background-color: #ffffff;
-  /* FIXED: Removed overflow: hidden so vertical scrolling can function freely */
-  overflow-x: hidden; 
+  background: #fff;
+  overflow-x: hidden;
   font-family: sans-serif;
 }
 
-/* ─── PORTFOLIO MAIN WRAPPER ─── */
 .portfolio-content {
   width: 100vw;
   min-height: 100vh;
   margin: 0;
   padding: 0;
-  /* FIXED: Removed overflow: hidden and forced elements to stack vertically down the page */
   overflow-x: hidden;
   display: flex;
-  flex-direction: column; 
-  background-color: #ffffff;
-  
-  /* fixes the unselectable focus border bug found by devtools */
-  border: 0px none transparent !important;
-  border-left: 0px none transparent !important;
+  flex-direction: column;
+  background: #fff;
+  border: 0 !important;
   outline: none !important;
-  outline-width: 0px !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* active state styling overrides to prevent any selection outline traces */
 .portfolio-content:focus,
 .portfolio-content:active,
 .portfolio-content:focus-visible {
   outline: none !important;
-  outline-width: 0px !important;
   box-shadow: none !important;
 }
 
-/* ─── HERO LAYOUT SECTIONS ─── */
 .hero-section {
-  /* FIXED: Lock to exact viewport dimensions so it handles vertical section spacing cleanly */
+  position: relative;
   width: 100vw;
   height: 100vh;
-  flex-shrink: 0; 
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: none !important;
+  border: 0 !important;
   outline: none !important;
 }
 
-/* ─── WHO AM I SECTIONS ─── */
 .who-section {
   width: 100vw;
   height: 100vh;
   flex-shrink: 0;
-  background-color: #000000;
+  background: #000;
   display: flex;
   justify-content: center;
   align-items: center;
-  border: none !important;
+  overflow: hidden;
+  border: 0 !important;
   outline: none !important;
+}
+
+.who-title {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: invert(1) brightness(2);
 }
 
 .center-stage {
@@ -84,64 +77,55 @@ body, html {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border: none !important;
+  border: 0 !important;
   outline: none !important;
 }
 
-/* ─── TEXT FOREGROUND LAYER ─── */
-#hero-title, #who-title {
+#hero-title{
   position: relative;
-  z-index: 5; /* High index forces text out over the top of the cards */
-  pointer-events: none; /* Mouse moves pass through white space directly down to cards */
-  border: none !important;
+  z-index: 5;
+  pointer-events: none;
+  border: 0 !important;
   outline: none !important;
 }
 
 .hero-heading {
-  /* 1. Enforces the responsive clearance boundary reference */
   max-width: calc(var(--text-clearance-width) * 1.6);
   width: 100%;
-  
-  /* 2. Derives an auto-scaling font size based proportionally on the radius variable */
-  font-size: calc(var(--orbit-radius) * 0.38); 
-  
-  /* 3. Layout alignments */
+  font-size: calc(var(--orbit-radius) * 0.38);
   display: block;
   margin: 0 auto;
   text-align: center;
-  white-space: nowrap; 
-
-  /* Your original preservation styles */
+  white-space: nowrap;
   font-weight: 500;
-  color: #000000;
+  color: #000;
   letter-spacing: -0.03em;
   line-height: 1;
-  pointer-events: auto; 
-}
-
-/* ─── CARD BACKGROUND LAYER ─── */
-.revolving-stage-container {
-  z-index: 1; /* Low index places the entire orbit circle underneath text */
-  pointer-events: none;
-  border-left: none !important;
-  outline: none !important;
-  width: 0px !important;
-  height: 0px !important;
-}
-
-.revolving-card-wrapper {
   pointer-events: auto;
 }
 
-.brutalist-43-card {
+.orbit {
+  z-index: 1;
+  pointer-events: none;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.orbit-item {
+  pointer-events: auto;
+}
+
+.orbit-card {
   aspect-ratio: 3 / 4;
   filter: invert(100%);
-  background-color: #ffffff;
-  border: 1px solid #ffffff;
+  background: #fff;
+  border: 1px solid #fff;
+  outline: none;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .card-media {
@@ -149,6 +133,8 @@ body, html {
   height: 100%;
   object-fit: cover;
   display: block;
+  border: 0;
+  outline: none;
 }
 
 .pad-logo {
@@ -165,16 +151,248 @@ body, html {
   justify-content: center;
   font-weight: 900;
   font-size: 1.1rem;
-  color: #000000;
+  color: #000;
 }
 
-/* ─── UNIVERSAL SELECTION WIPE ─── */
-/* prevents the browser from showing selection highlights across elements */
 *::selection {
   background: transparent !important;
   color: inherit !important;
 }
+
 *::-moz-selection {
   background: transparent !important;
   color: inherit !important;
+}
+
+.mask {
+  opacity: var(--mask-opacity, 1) !important;
+  clip-path: var(
+    --mask-clip-override,
+    polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)
+  ) !important;
+  transition:
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    clip-path 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.trail {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999998;
+  mix-blend-mode: difference;
+  filter: url(#arrow-goo);
+  background: transparent;
+  display: none;
+}
+
+.arrow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999999;
+  width: 34px;
+  height: 34px;
+  margin-left: -17px;
+  margin-top: -17px;
+  mix-blend-mode: difference;
+  opacity: 0;
+  will-change: transform, opacity;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.arrow-svg {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.loader {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 99999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.loader-inner {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-track {
+  width: 100%;
+  height: 8px;
+  background: #222;
+  position: relative;
+}
+
+.loader-fill {
+  height: 100%;
+  background: #fff;
+  transition: width 0.05s linear;
+  will-change: width;
+}
+
+body,
+a,
+button,
+h1,
+h2,
+p,
+[data-hover="true"] {
+  cursor: none !important;
+}
+
+.cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 999999;
+  opacity: var(--mask-opacity, 1) !important;
+  background: #fff;
+  mix-blend-mode: difference;
+  border-radius: 0;
+  will-change: transform, width, height;
+  transition:
+    transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translateX(-50%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.marquee {
+  position: relative;
+  width: 100vw;
+  height: var(--marquee-h);
+  overflow: hidden;
+  box-sizing: border-box;
+  cursor: pointer;
+  background: var(--marquee-bg);
+  border-top: 3px solid var(--marquee-border);
+  border-bottom: 3px solid var(--marquee-border);
+  transition:
+    background-color 0.4s ease,
+    border-color 0.4s ease;
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  height: 100%;
+  align-items: center;
+  will-change: transform;
+  animation:
+    marquee-left
+    var(--marquee-speed)
+    linear
+    infinite;
+}
+
+.marquee-track.reverse {
+  animation-name: marquee-right;
+}
+
+.marquee:hover {
+  background: var(--marquee-hover-bg);
+  border-color: var(--marquee-hover-border);
+}
+
+.marquee:hover .marquee-track {
+  animation-duration: var(--marquee-hover-speed);
+}
+
+.marquee-track span {
+  flex-shrink: 0;
+  padding-right: 2em;
+  font-family: var(--marquee-font);
+  font-size: var(--marquee-size);
+  font-weight: var(--marquee-weight);
+  letter-spacing: var(--marquee-spacing);
+  text-transform: uppercase;
+  color: var(--marquee-color);
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.marquee:hover .marquee-track span {
+  color: var(--marquee-hover-color);
+}
+
+.scroll-guide {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.7;
+  transition: opacity 0.25s ease;
+}
+
+.scroll-guide:hover {
+  opacity: 1;
+}
+
+.scroll-arrow {
+  display: inline-block;
+  font-size: 16px;
+  animation: scroll-bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(5px);
+  }
 }

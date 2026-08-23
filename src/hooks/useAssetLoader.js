@@ -1,67 +1,64 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-export default function useAssetLoader(assets = [], componentName = "App") {
-  const [percent, setPercent] = useState(0);
-  const [assetsReady, setAssetsReady] = useState(false);
-  const loaderFinishedIntro = useRef(false);
-  const [showLoader, setShowLoader] = useState(true);
+export default function useAssetLoader(assets = []) {
+  const [progress, setProgress] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [show, setShow] = useState(true);
 
-  const logProgress = (currentPercent) => {
-    const totalBars = 10;
-    const filledBars = Math.round((currentPercent / 100) * totalBars);
-    const emptyBars = totalBars - filledBars;
-
-    const hashStr = '#'.repeat(filledBars);
-    const underscoreStr = '_'.repeat(emptyBars);
-
-    console.log(`[${componentName}] loading: ${hashStr}${underscoreStr} [${currentPercent}%]`);
-  };
+  const introDone = useRef(false);
 
   useEffect(() => {
-    if (assets.length === 0) {
-      setPercent(100);
-      setAssetsReady(true);
-      logProgress(100);
+    if (!assets.length) {
+      setProgress(100);
+      setReady(true);
+
+      if (introDone.current) {
+        setShow(false);
+      }
+
       return;
     }
 
-    let loadedCount = 0;
-    logProgress(0);
+    let loaded = 0;
+
+    const load = () => {
+      loaded += 1;
+
+      const progress = Math.round(
+        (loaded / assets.length) * 100
+      );
+
+      setProgress(progress);
+
+      if (loaded === assets.length) {
+        setReady(true);
+
+        if (introDone.current) {
+          setShow(false);
+        }
+      }
+    };
 
     assets.forEach((src) => {
       const img = new Image();
+
+      img.onload = load;
+      img.onerror = load;
       img.src = src;
-
-      const handleAssetLoad = () => {
-        loadedCount++;
-        const currentPercent = Math.round((loadedCount / assets.length) * 100);
-
-        setPercent(currentPercent);
-        logProgress(currentPercent);
-
-        if (loadedCount === assets.length) {
-          setAssetsReady(true);
-          if (loaderFinishedIntro.current) {
-            setShowLoader(false);
-          }
-        }
-      };
-
-      img.onload = handleAssetLoad;
-      img.onerror = handleAssetLoad;
     });
-  }, [assets, componentName]);
+  }, [assets]);
 
-  const handleLoaderComplete = () => {
-    loaderFinishedIntro.current = true;
-    if (assetsReady) {
-      setShowLoader(false);
+  const complete = () => {
+    introDone.current = true;
+
+    if (ready) {
+      setShow(false);
     }
   };
 
   return {
-    showLoader,
-    percent,
-    handleLoaderComplete
+    showLoader: show,
+    percent: progress,
+    handleLoaderComplete: complete,
   };
 }
