@@ -19,6 +19,7 @@ export default function Hero() {
         range="bottom"
         lookAt={{ x: 'center', y: 'bottom' }}
         sections={['.hero-section', '#hero-stage']}
+        
       />
 
       <div className="center-stage">
