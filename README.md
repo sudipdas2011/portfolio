@@ -31,7 +31,7 @@
 ### As I started to add more components like the Orbiting Cards, The rising effect Text component, the layout and positioning was the headache for me.
 ### Also optimized the cursor to act smooth by making it not just stick to pointer position but to follow it with a delay so that it feels smooth.
 ### Also add a detection system to detect moving objects under the cursor. Bcuz the main reason to do this was that when the cursor hoverd over any of the rotating cards , it would jus detect the single cards and if i stop moving the cursor, the enlarged cursor would stick there.
-### At first, I was building the whole page in just `App.jsx` but later i sepearted it into `Hero.jsx` and `WhoAmI.jsx`.
+### At first, I was building the whole page in just `App.jsx` but later i seperated it into `Hero.jsx` and `WhoAmI.jsx`.
 
 ## you must try it out [here!](https://sudipdas2011.github.io/portfolio/)
 
