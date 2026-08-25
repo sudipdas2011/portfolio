@@ -4345,19 +4345,41 @@ return orthographicDepthToViewZ(depth,cameraNear,cameraFar);
         return ${_N(sN(cN).outputWeights,0,8,pN(`head`),uN(`outputWeight`),[sN(cN).outputBias])};
     }
 `,RN=[TN,yN({functionName:`tapOutput`,scaleName:`tapOutputWeight`,weights:sN(cN).tapOutputWeights,bias:sN(cN).tapOutputBias,relu:!0}),AN,yN({functionName:`keyProject`,scaleName:`keyWeight`,weights:sN(cN).keyProjectionWeights,bias:Array(8).fill(0)}),yN({functionName:`valueProject`,scaleName:`valueWeight`,weights:sN(cN).valueProjectionWeights,bias:Array(8).fill(0)}),MN,IN,LN].join(`
-`);lN.reduce((e,[,t])=>e+sN(cN)[t].length,0),lN.reduce((e,[,t])=>e+sN(cN)[t].filter(e=>e!==0).length,0),`${RN}`;var zN=(0,v.createContext)(null),BN=e=>(e.getAttributes()&2)==2;function VN(e){let t=new WeakMap;return{acquire(n,r){let i=t.get(n);i?(i.count++,i.forcedValue=r):t.set(n,{count:1,original:n[e],forcedValue:r})},release(n){let r=t.get(n);r&&--r.count<=0&&(n[e]===r.forcedValue&&(n[e]=r.original),t.delete(n))}}}var HN=VN(`autoClear`),UN=VN(`toneMapping`);function WN(e,t){let n=[];for(let r=0;r<e.length;r++){let i=e[r];if(i instanceof DM){let a=[i];if(!BN(i)){let t;for(;(t=e[r+1])instanceof DM&&!BN(t);)a.push(t),r++}n.push(new rN(t,...a))}else i instanceof iM&&n.push(i)}return n}var GN=(0,v.memo)(function({children:e,camera:t,scene:n,resolutionScale:r,enabled:i=!0,renderPriority:a=1,autoClear:o=!0,depthBuffer:s,enableNormalPass:c,stencilBuffer:l,multisampling:u=8,frameBufferType:d=Fd,ref:f}){let{gl:p,scene:m,camera:h,size:g}=sk(),_=n||m,y=t||h,[b,x]=(0,v.useState)(null);(0,v.useEffect)(()=>{HN.acquire(p,!1);let e=new gM(p,{depthBuffer:s,stencilBuffer:l,multisampling:u,frameBufferType:d});e.addPass(new KM(_,y));let t=null,n=null;return c&&(t=new iN(_,y),t.enabled=!1,e.addPass(t),r!==void 0&&(n=new XM({normalBuffer:t.texture,resolutionScale:r}),n.enabled=!1,e.addPass(n))),e.setSize(g.width,g.height),x({composer:e,normalPass:t,downSamplingPass:n}),()=>{e.dispose(),HN.release(p)}},[y,p,s,l,u,d,_,c,r]),(0,v.useEffect)(()=>{b?.composer.setSize(g.width,g.height)},[b,g]),ck((e,t)=>{if(!i||!b)return;let{composer:n}=b,r=p.autoClear;p.autoClear=o,l&&!o&&p.clearStencil(),n.render(t),p.autoClear=r},i?a:0);let C=(0,v.useRef)(null);(0,v.useLayoutEffect)(()=>{if(!b)return;let{composer:e,normalPass:t,downSamplingPass:n}=b,r=[],i=C.current.__r3f;if(i){let e=i.children.map(e=>e.object).filter(e=>e instanceof DM||e instanceof iM);r.push(...WN(e,y))}for(let t of r)e.addPass(t);return r.length&&(t&&(t.enabled=!0),n&&(n.enabled=!0)),()=>{for(let t of r)e.removePass(t);t&&(t.enabled=!1),n&&(n.enabled=!1)}},[b,e,y]),(0,v.useEffect)(()=>(UN.acquire(p,0),p.toneMapping=0,()=>{UN.release(p)}),[p]);let w=(0,v.useMemo)(()=>b?{composer:b.composer,normalPass:b.normalPass,downSamplingPass:b.downSamplingPass,resolutionScale:r,camera:y,scene:_}:null,[b,r,y,_]);return(0,v.useImperativeHandle)(f,()=>b?.composer,[b]),w?(0,S.jsx)(zN.Provider,{value:w,children:(0,S.jsx)(`group`,{ref:C,children:e})}):null}),KN=0,qN=new WeakMap,JN=new WeakMap,YN=0;function XN(e){let t=JN.get(e);return t===void 0&&(t=YN++,JN.set(e,t)),t}function ZN(e,t){if(typeof e!=`object`||!e)return e;if(t.has(e))return`[Circular]`;if(ArrayBuffer.isView(e)||e instanceof ArrayBuffer)return XN(e);if(t.add(e),Array.isArray(e))return e.map(e=>ZN(e,t));let n={};for(let r of Object.keys(e).sort())n[r]=ZN(e[r],t);return n}function QN(e){return JSON.stringify(ZN(e,new WeakSet))}function $N(e,t){return function({ref:n,blendFunction:r=t?.blendFunction,opacity:i=t?.opacity,...a}){let o=qN.get(e);if(!o){let t=`@react-three/postprocessing/${e.name}-${KN++}`;Pk({[t]:e}),qN.set(e,o=t)}let s=sk(e=>e.camera),c=(0,v.useMemo)(()=>[...t?.args??[],...a.args??[{...t,...a}]],[QN(a)]);return(0,S.jsx)(o,{camera:s,"blendMode-blendFunction":r,"blendMode-opacity-value":i,...a,args:c,ref:n})}}var eP=$N(GM,{blendFunction:0}),tP=`/portfolio/assets/headModel-C4Cseox_.glb`;function nP(){let{scene:e}=nM(tP),t=(0,v.useRef)(),{mouse:n}=sk(),r=(0,v.useRef)({currentY:-3,targetY:0,currentAngleOffset:-Math.PI,targetAngleOffset:-Math.PI/2,progress:0}),i=(0,v.useMemo)(()=>e.clone(),[e]),a=(0,v.useMemo)(()=>new Qb({uniforms:{uTime:{value:0},uColorFar:{value:new Z(`#020916`)},uColorMidFar:{value:new Z(`#0033aa`)},uColorMidNear:{value:new Z(`#00ffbb`)},uColorNear:{value:new Z(`#ccff00`)}},vertexShader:`
+`);lN.reduce((e,[,t])=>e+sN(cN)[t].length,0),lN.reduce((e,[,t])=>e+sN(cN)[t].filter(e=>e!==0).length,0),`${RN}`;var zN=(0,v.createContext)(null),BN=e=>(e.getAttributes()&2)==2;function VN(e){let t=new WeakMap;return{acquire(n,r){let i=t.get(n);i?(i.count++,i.forcedValue=r):t.set(n,{count:1,original:n[e],forcedValue:r})},release(n){let r=t.get(n);r&&--r.count<=0&&(n[e]===r.forcedValue&&(n[e]=r.original),t.delete(n))}}}var HN=VN(`autoClear`),UN=VN(`toneMapping`);function WN(e,t){let n=[];for(let r=0;r<e.length;r++){let i=e[r];if(i instanceof DM){let a=[i];if(!BN(i)){let t;for(;(t=e[r+1])instanceof DM&&!BN(t);)a.push(t),r++}n.push(new rN(t,...a))}else i instanceof iM&&n.push(i)}return n}var GN=(0,v.memo)(function({children:e,camera:t,scene:n,resolutionScale:r,enabled:i=!0,renderPriority:a=1,autoClear:o=!0,depthBuffer:s,enableNormalPass:c,stencilBuffer:l,multisampling:u=8,frameBufferType:d=Fd,ref:f}){let{gl:p,scene:m,camera:h,size:g}=sk(),_=n||m,y=t||h,[b,x]=(0,v.useState)(null);(0,v.useEffect)(()=>{HN.acquire(p,!1);let e=new gM(p,{depthBuffer:s,stencilBuffer:l,multisampling:u,frameBufferType:d});e.addPass(new KM(_,y));let t=null,n=null;return c&&(t=new iN(_,y),t.enabled=!1,e.addPass(t),r!==void 0&&(n=new XM({normalBuffer:t.texture,resolutionScale:r}),n.enabled=!1,e.addPass(n))),e.setSize(g.width,g.height),x({composer:e,normalPass:t,downSamplingPass:n}),()=>{e.dispose(),HN.release(p)}},[y,p,s,l,u,d,_,c,r]),(0,v.useEffect)(()=>{b?.composer.setSize(g.width,g.height)},[b,g]),ck((e,t)=>{if(!i||!b)return;let{composer:n}=b,r=p.autoClear;p.autoClear=o,l&&!o&&p.clearStencil(),n.render(t),p.autoClear=r},i?a:0);let C=(0,v.useRef)(null);(0,v.useLayoutEffect)(()=>{if(!b)return;let{composer:e,normalPass:t,downSamplingPass:n}=b,r=[],i=C.current.__r3f;if(i){let e=i.children.map(e=>e.object).filter(e=>e instanceof DM||e instanceof iM);r.push(...WN(e,y))}for(let t of r)e.addPass(t);return r.length&&(t&&(t.enabled=!0),n&&(n.enabled=!0)),()=>{for(let t of r)e.removePass(t);t&&(t.enabled=!1),n&&(n.enabled=!1)}},[b,e,y]),(0,v.useEffect)(()=>(UN.acquire(p,0),p.toneMapping=0,()=>{UN.release(p)}),[p]);let w=(0,v.useMemo)(()=>b?{composer:b.composer,normalPass:b.normalPass,downSamplingPass:b.downSamplingPass,resolutionScale:r,camera:y,scene:_}:null,[b,r,y,_]);return(0,v.useImperativeHandle)(f,()=>b?.composer,[b]),w?(0,S.jsx)(zN.Provider,{value:w,children:(0,S.jsx)(`group`,{ref:C,children:e})}):null}),KN=0,qN=new WeakMap,JN=new WeakMap,YN=0;function XN(e){let t=JN.get(e);return t===void 0&&(t=YN++,JN.set(e,t)),t}function ZN(e,t){if(typeof e!=`object`||!e)return e;if(t.has(e))return`[Circular]`;if(ArrayBuffer.isView(e)||e instanceof ArrayBuffer)return XN(e);if(t.add(e),Array.isArray(e))return e.map(e=>ZN(e,t));let n={};for(let r of Object.keys(e).sort())n[r]=ZN(e[r],t);return n}function QN(e){return JSON.stringify(ZN(e,new WeakSet))}function $N(e,t){return function({ref:n,blendFunction:r=t?.blendFunction,opacity:i=t?.opacity,...a}){let o=qN.get(e);if(!o){let t=`@react-three/postprocessing/${e.name}-${KN++}`;Pk({[t]:e}),qN.set(e,o=t)}let s=sk(e=>e.camera),c=(0,v.useMemo)(()=>[...t?.args??[],...a.args??[{...t,...a}]],[QN(a)]);return(0,S.jsx)(o,{camera:s,"blendMode-blendFunction":r,"blendMode-opacity-value":i,...a,args:c,ref:n})}}var eP=$N(GM,{blendFunction:0}),tP=`/portfolio/assets/headModel-C4Cseox_.glb`;function nP(){let{scene:e}=nM(tP),t=(0,v.useRef)(),{mouse:n}=sk(),r=(0,v.useRef)({currentY:-3,targetY:0,currentAngleOffset:-Math.PI,targetAngleOffset:-Math.PI/2,progress:0}),i=(0,v.useMemo)(()=>new Qb({wireframe:!0,transparent:!0,depthWrite:!0,uniforms:{uTime:{value:0},uMouse:{value:new Y(0,0)},uColorFar:{value:new Z(`#020916`)},uColorMidFar:{value:new Z(`#0033aa`)},uColorMidNear:{value:new Z(`#00ffbb`)},uColorNear:{value:new Z(`#ccff00`)},uShadowDarkness:{value:.05},uShadowSpread:{value:.4}},vertexShader:`
+        uniform float uTime;
+        uniform vec2 uMouse;
+        
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
         
         void main() {
+          vLocalNormal = normalize(normal); 
           vLocalPosition = position;
-          vLocalNormal = normalize(normal); // Static normal relative only to the head geometry itself
           
+          // Calculate the default camera projected space first to find screen coordinates
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          vViewPosition = mvPosition;
+          vec4 clipPosition = projectionMatrix * mvPosition;
+          vec2 ndc = clipPosition.xy / clipPosition.w; // 2D flat screen position of this vertex
           
-          gl_Position = projectionMatrix * mvPosition;
+          // Measure distance from the flat screen cursor to this vertex point
+          float mouseDist = distance(ndc, uMouse);
+          
+          // 1. PHYSICAL GEOMETRY RIPPLE CALCULATION
+          // Radius of ripple displacement on screen (0.5 bounds)
+          float rippleForce = smoothstep(0.5, 0.0, mouseDist);
+          // Smooth geometric displacement height wave equation
+          float wave = sin(mouseDist * 25.0 - uTime * 8.0) * rippleForce * 0.003; //RIPPLE INTENSITY
+          
+          // 2. DISPLACE VERTICES ALONG THEIR NORMALS
+          // This physically deforms the mesh coordinates smoothly outward under your cursor
+          vec3 displacedPosition = position + normal * wave;
+          
+          // 3. Recalculate real position matrices using the newly warped geometry bounds
+          vec4 displacedMvPosition = modelViewMatrix * vec4(displacedPosition, 1.0);
+          vViewPosition = displacedMvPosition;
+          
+          gl_Position = projectionMatrix * displacedMvPosition;
         }
       `,fragmentShader:`
         uniform float uTime;
@@ -4365,12 +4387,13 @@ return orthographicDepthToViewZ(depth,cameraNear,cameraFar);
         uniform vec3 uColorMidFar;
         uniform vec3 uColorMidNear;
         uniform vec3 uColorNear;
+        uniform float uShadowDarkness;
+        uniform float uShadowSpread;
         
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
 
-        // 3D Simplex-style Noise for fluid ripples
         float hash(vec3 p) {
           p = fract(p * vec3(443.8975, 397.2973, 491.1871));
           p += dot(p.xyz, p.yzx + 19.19);
@@ -4389,17 +4412,17 @@ return orthographicDepthToViewZ(depth,cameraNear,cameraFar);
         }
 
         void main() {
-          // 1. Core Front-to-Back View Depth Map Calculation
+          // Core Front-to-Back View Depth Map Calculation
           float viewDepth = -vViewPosition.z;
           float normalizedDepth = (viewDepth - 3.2) / 1.5; 
           float depthMap = 1.0 - clamp(normalizedDepth, 0.0, 1.0);
 
-          // 2. Liquid Distortion Warp Overlay using local tracking
+          // Liquid Noise Texture Overlay
           vec3 noiseCoord = vLocalPosition * 4.0 + vec3(0.0, uTime * 1.0, uTime * 0.4);
           float liquidNoise = noise(noiseCoord) * 0.12;
           float finalDepth = clamp(depthMap + liquidNoise, 0.0, 1.0);
 
-          // 3. Multi-tier Base Color Gradient Setup
+          // Multi-tier Base Color Gradient Setup
           vec3 baseGradient;
           if (finalDepth < 0.33) {
             baseGradient = mix(uColorFar, uColorMidFar, smoothstep(0.0, 0.33, finalDepth));
@@ -4409,22 +4432,12 @@ return orthographicDepthToViewZ(depth,cameraNear,cameraFar);
             baseGradient = mix(uColorMidNear, uColorNear, smoothstep(0.66, 1.0, finalDepth));
           }
 
-          // 4. FIXED NON-ANIMATED LOCAL CAVITY & OCCLUSION FACTOR
-          // Calculates curvature distance relative to the model's structural center.
-          // Inward-facing planes/recesses evaluate tightly to create dark valley shadows.
+          // Local Fixed Cavity Shadow Mask
           vec3 localCenterOffset = normalize(vLocalPosition);
           float cavityFactor = dot(vLocalNormal, localCenterOffset);
-          
-          // Tighten thresholds to specifically isolate inner valleys (eyes, mouth, joints)
-          float shadowMask = smoothstep(-0.2, 0.5, cavityFactor);
-          
-          // Boost shadow values in the deepest core valleys
-          float jointShadow = mix(0.0, 1.0, shadowMask);
+          float shadowMask = smoothstep(-0.2, uShadowSpread, cavityFactor);
+          float jointShadow = mix(uShadowDarkness, 1.0, shadowMask);
 
-          // 5. MULTIPLY OVER GRADIENT
-          // Directly multiplies the static shadow mask over the base liquid gradient color map
-          vec3 finalOutputColor = baseGradient * jointShadow;
-
-          gl_FragColor = vec4(finalOutputColor, 1.0);
+          gl_FragColor = vec4(baseGradient * jointShadow, 1.0);
         }
-      `,side:2}),[]),o=(0,v.useMemo)(()=>new o_({color:`#ffffff`,wireframe:!0,transparent:!0,opacity:.85,depthWrite:!1,polygonOffset:!0,polygonOffsetFactor:-1,polygonOffsetUnits:-1}),[]);return(0,v.useMemo)(()=>{e.traverse(e=>{e.isMesh&&(e.material=a)}),i.traverse(e=>{e.isMesh&&(e.material=o)})},[e,i,a,o]),ck(e=>{if(!t.current)return;a.uniforms.uTime.value=e.clock.getElapsedTime(),r.current.currentY+=(r.current.targetY-r.current.currentY)*.05,r.current.currentAngleOffset+=(r.current.targetAngleOffset-r.current.currentAngleOffset)*.05,t.current.position.y=r.current.currentY;let i=-n.y*.4,o=n.x*.4+r.current.currentAngleOffset;t.current.rotation.x+=(i-t.current.rotation.x)*.08,t.current.rotation.y+=(o-t.current.rotation.y)*.08}),(0,S.jsxs)(`group`,{ref:t,position:[0,-4,0],scale:2.2,rotation:[0,-Math.PI,0],children:[(0,S.jsx)(`primitive`,{object:e}),(0,S.jsx)(`primitive`,{object:i})]})}function rP(){return(0,S.jsx)(`div`,{style:{width:`100%`,height:`100%`,position:`relative`},children:(0,S.jsxs)(MA,{camera:{position:[0,0,4.5],fov:45},gl:{alpha:!0,antialias:!0},onCreated:({gl:e})=>e.setClearColor(0,0),children:[(0,S.jsx)(v.Suspense,{fallback:null,children:(0,S.jsx)(nP,{})}),(0,S.jsx)(GN,{children:(0,S.jsx)(eP,{intensity:.2,luminanceThreshold:.1,luminanceSmoothing:.7})})]})})}nM.preload(tP);function iP(){let[e,t]=(0,v.useState)(!1),[n,r]=(0,v.useState)(`idle`),i=(0,v.useRef)(null);return(0,v.useEffect)(()=>{let e=new IntersectionObserver(([n])=>{n.isIntersecting&&(t(!0),r(`rise`),e.disconnect())},{threshold:.85});return i.current&&e.observe(i.current),()=>e.disconnect()},[]),(0,v.useEffect)(()=>{if(n===`rise`){let e=setTimeout(()=>{r(`exit`)},2e3);return()=>clearTimeout(e)}if(n===`exit`){let e=setTimeout(()=>{r(`done`)},600);return()=>clearTimeout(e)}},[n]),(0,S.jsx)(`section`,{ref:i,className:`who-section full-backdrop-layout`,children:e&&(0,S.jsxs)(S.Fragment,{children:[n===`done`&&(0,S.jsx)(`div`,{className:`who-bg-canvas-layer content-fade-in`,children:(0,S.jsx)(rP,{})}),n!==`done`&&(0,S.jsx)(`div`,{className:`who-fg-content-overlay text-stage-${n}`,children:(0,S.jsx)(`div`,{style:{transform:`scale(${(window.innerWidth*4e-4).toFixed(2)})`},children:(0,S.jsx)(ed,{text:`who am i ?`,className:`hero-heading`})})})]})})}var aP=[id,ad,od,sd,cd,ld];function oP(){let{showLoader:e,percent:t,handleLoaderComplete:n}=b(aP,`Portfolio`);return(0,S.jsxs)(S.Fragment,{children:[(0,S.jsx)(w,{}),e?(0,S.jsx)(T,{onComplete:n,debug:!1,progress:t}):(0,S.jsxs)(`div`,{className:`portfolio-content`,children:[(0,S.jsx)(ud,{}),(0,S.jsx)(iP,{})]})]})}(0,y.createRoot)(document.getElementById(`root`)).render((0,S.jsx)(v.StrictMode,{children:(0,S.jsx)(oP,{})}));
+      `,side:2}),[]);return(0,v.useMemo)(()=>{e.traverse(e=>{e.isMesh&&(e.material=i)})},[e,i]),ck(e=>{if(!t.current)return;i.uniforms.uTime.value=e.clock.getElapsedTime(),i.uniforms.uMouse.value.set(n.x,n.y),r.current.currentY+=(r.current.targetY-r.current.currentY)*.05,r.current.currentAngleOffset+=(r.current.targetAngleOffset-r.current.currentAngleOffset)*.05,t.current.position.y=r.current.currentY;let a=-n.y*.4,o=n.x*.4+r.current.currentAngleOffset;t.current.rotation.x+=(a-t.current.rotation.x)*.08,t.current.rotation.y+=(o-t.current.rotation.y)*.08}),(0,S.jsx)(`group`,{ref:t,position:[0,-4,0],scale:2.2,rotation:[0,-Math.PI,0],children:(0,S.jsx)(`primitive`,{object:e})})}function rP(){return(0,S.jsx)(`div`,{style:{width:`100%`,height:`100%`,position:`relative`},children:(0,S.jsxs)(MA,{camera:{position:[0,0,4.5],fov:45},gl:{alpha:!0,antialias:!0},onCreated:({gl:e})=>e.setClearColor(0,0),children:[(0,S.jsx)(v.Suspense,{fallback:null,children:(0,S.jsx)(nP,{})}),(0,S.jsx)(GN,{children:(0,S.jsx)(eP,{intensity:.6,luminanceThreshold:.05,luminanceSmoothing:.7})})]})})}nM.preload(tP);function iP(){let[e,t]=(0,v.useState)(!1),[n,r]=(0,v.useState)(`idle`),i=(0,v.useRef)(null);return(0,v.useEffect)(()=>{let e=new IntersectionObserver(([n])=>{n.isIntersecting&&(t(!0),r(`rise`),e.disconnect())},{threshold:.85});return i.current&&e.observe(i.current),()=>e.disconnect()},[]),(0,v.useEffect)(()=>{if(n===`rise`){let e=setTimeout(()=>{r(`exit`)},2e3);return()=>clearTimeout(e)}if(n===`exit`){let e=setTimeout(()=>{r(`done`)},600);return()=>clearTimeout(e)}},[n]),(0,S.jsx)(`section`,{ref:i,className:`who-section full-backdrop-layout`,children:e&&(0,S.jsxs)(S.Fragment,{children:[n===`done`&&(0,S.jsx)(`div`,{className:`who-bg-canvas-layer content-fade-in`,children:(0,S.jsx)(rP,{})}),n!==`done`&&(0,S.jsx)(`div`,{className:`who-fg-content-overlay text-stage-${n}`,children:(0,S.jsx)(`div`,{style:{transform:`scale(${(window.innerWidth*4e-4).toFixed(2)})`},children:(0,S.jsx)(ed,{text:`who am i ?`,className:`hero-heading`})})})]})})}var aP=[id,ad,od,sd,cd,ld];function oP(){let{showLoader:e,percent:t,handleLoaderComplete:n}=b(aP,`Portfolio`);return(0,S.jsxs)(S.Fragment,{children:[(0,S.jsx)(w,{}),e?(0,S.jsx)(T,{onComplete:n,debug:!1,progress:t}):(0,S.jsxs)(`div`,{className:`portfolio-content`,children:[(0,S.jsx)(ud,{}),(0,S.jsx)(iP,{})]})]})}(0,y.createRoot)(document.getElementById(`root`)).render((0,S.jsx)(v.StrictMode,{children:(0,S.jsx)(oP,{})}));
