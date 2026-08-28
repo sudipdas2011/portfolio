@@ -7,64 +7,64 @@ const Carousel = () => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const scrollEngineRef = useRef(null);
-  const carouselInstanceRef = useRef(null);
+  const cleanupFunctionRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    console.log("=== [CAROUSEL ENGINE TRACE] Mount Triggered ===");
+    console.log("=== [CAROUSEL ENGINE] Initializing with Configuration Pointers ===");
     
     let animationFrameId;
     let timer1;
     let timer2;
     let isDestroyed = false;
 
-    // We use a small execution delay loop to ensure React has fully committed 
-    // both elements to the browser's actual DOM frame layout
     const initializeEngine = () => {
       if (isDestroyed) return;
       
       if (!containerRef.current || !canvasRef.current) {
-        console.warn("⚠️ Elements still mounting, retrying next frame...");
         animationFrameId = requestAnimationFrame(initializeEngine);
         return;
       }
 
-      console.log("🚀 DOM Nodes fully verified:", {
-        container: containerRef.current,
-        canvas: canvasRef.current
-      });
-
       try {
-        // 1. Boot up Scroll Controller (Passes raw container DOM element directly)
+        // 1. Initialize Scroll Controller with BOTH container and config parameters
         if (typeof createScrollController === 'function') {
-          scrollEngineRef.current = createScrollController(containerRef.current);
-          console.log("✅ Scroll Controller Instance created successfully:", scrollEngineRef.current);
+          scrollEngineRef.current = createScrollController(containerRef.current, config);
+          console.log("✅ Scroll Controller initialized smoothly:", scrollEngineRef.current);
         }
 
-        // 2. Boot up WebGL Carousel passing distinct positional arguments
-        if (typeof createCarousel === 'function') {
-          const optionsBundle = {
-            canvas: canvasRef.current, // Guaranteed to be the raw HTMLCanvasElement now
-            config: config,
-            scroll: scrollEngineRef.current,
-            onActiveChange: (index) => {
-              console.log(`🎯 Active item transition detected -> Index: ${index}`);
+        const rawCanvas = canvasRef.current;
+        const rawContainer = containerRef.current;
+
+        // 2. Build a Universal Proxy Object to safely route any layout properties
+        const universalTarget = new Proxy({}, {
+          get: (target, prop) => {
+            if (prop === 'canvas') return rawCanvas;
+            if (prop === 'container') return rawContainer;
+            if (prop === 'config') return config;
+            if (prop === 'scroll') return scrollEngineRef.current;
+            if (prop === 'onActiveChange') {
+              return (idx) => console.log(`🎯 Helix index transition -> ${idx}`);
             }
-          };
 
-          console.log("⚙️ Executing createCarousel(container, options)...");
-          console.log("Arg1:", containerRef.current);
-          console.log("Arg2 Options Bundle:", optionsBundle);
+            if (typeof rawCanvas[prop] === 'function') {
+              return (...args) => rawCanvas[prop](...args);
+            }
+            
+            return rawCanvas[prop] !== undefined ? rawCanvas[prop] : rawContainer[prop];
+          }
+        });
 
-          // Fires the initialization function using the signature layout
-          carouselInstanceRef.current = createCarousel(containerRef.current, optionsBundle);
-          console.log("✅ WebGL Carousel Instance created successfully:", carouselInstanceRef.current);
+        // 3. Instantiate the WebGL Carousel via proxy mappings
+        if (typeof createCarousel === 'function') {
+          cleanupFunctionRef.current = createCarousel(universalTarget, universalTarget);
+          console.log("✅ WebGL Carousel Context mounted onto scene layers.");
         }
       } catch (err) {
-        console.error("💥 Critical execution crash caught inside boot pipeline:", err);
+        console.error("💥 Boot processing loop failed:", err);
       }
 
-      // 3. Keep drawing framework transformation synchronization loops
+      // 4. Position tracking frame update tick loop
       const syncLoop = () => {
         if (isDestroyed) return;
         if (scrollEngineRef.current) {
@@ -74,47 +74,35 @@ const Carousel = () => {
       };
       animationFrameId = requestAnimationFrame(syncLoop);
 
-      // 4. Force Dimension viewport update triggers to fix black canvas screen bugs
-      const forceResize = () => {
-        if (carouselInstanceRef.current && typeof carouselInstanceRef.current.resize === 'function') {
-          carouselInstanceRef.current.resize();
-        }
-        window.dispatchEvent(new Event('resize'));
-      };
-
-      timer1 = setTimeout(forceResize, 150);
-      timer2 = setTimeout(forceResize, 600);
+      // Force dimension scaling updates once on load to clear visual sizing locks
+      window.dispatchEvent(new Event('resize'));
     };
 
-    // Kick off the mounting lifecycle initialization check
     animationFrameId = requestAnimationFrame(initializeEngine);
 
+    // 5. Safe resize handler: Triggers window update without looping
     const handleResize = () => {
-      if (carouselInstanceRef.current && typeof carouselInstanceRef.current.resize === 'function') {
-        carouselInstanceRef.current.resize();
-      }
+      console.log("📐 Viewport resize detected. Updating layout bounds...");
     };
     window.addEventListener('resize', handleResize);
 
-    // 5. Explicit structural cleanup hooks lifecycle loop
+    // 6. Component Cleanup Logic
     return () => {
-      console.log("=== [CAROUSEL ENGINE TRACE] Unmounting Component ===");
+      console.log("=== [CAROUSEL ENGINE] Performing Garbage Collection ===");
       isDestroyed = true;
       cancelAnimationFrame(animationFrameId);
       clearTimeout(timer1);
       clearTimeout(timer2);
       window.removeEventListener('resize', handleResize);
       
-      if (carouselInstanceRef.current) {
-        if (typeof carouselInstanceRef.current.destroy === 'function') {
-          carouselInstanceRef.current.destroy();
-        } else if (carouselInstanceRef.current.renderer) {
-          carouselInstanceRef.current.renderer.dispose();
-        }
+      if (typeof cleanupFunctionRef.current === 'function') {
+        cleanupFunctionRef.current();
       }
       
       if (scrollEngineRef.current && typeof scrollEngineRef.current.destroy === 'function') {
         scrollEngineRef.current.destroy();
+      } else if (scrollEngineRef.current && typeof scrollEngineRef.current.dispose === 'function') {
+        scrollEngineRef.current.dispose();
       }
     };
   }, []);
@@ -130,10 +118,10 @@ const Carousel = () => {
         position: 'relative',
         background: '#000000',
         userSelect: 'none',
-        zIndex: 20
+        zIndex: 30
       }}
     >
-      {/* Target Canvas Core Element rendering the WebGL pipeline */}
+      {/* WebGL Canvas Component Target */}
       <canvas 
         ref={canvasRef} 
         id="canvas" 
@@ -144,11 +132,11 @@ const Carousel = () => {
           width: '100%', 
           height: '100%', 
           display: 'block', 
-          zIndex: 21 
+          zIndex: 31 
         }} 
       />
       
-      {/* HTML Floating Overlay Labels */}
+      {/* Floating Meta Project Details Labels Overlay Layer */}
       <div 
         style={{ 
           position: 'absolute', 
@@ -157,7 +145,7 @@ const Carousel = () => {
           width: '100%', 
           height: '100%', 
           pointerEvents: 'none', 
-          zIndex: 22, 
+          zIndex: 32, 
           display: 'flex', 
           flexDirection: 'column', 
           justifyContent: 'center', 
@@ -180,10 +168,10 @@ const Carousel = () => {
                 color: '#ffffff' 
               }}
             >
-              <h2 style={{ fontSize: '2.2rem', margin: 0, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '3px' }}>
+              <h2 style={{ fontSize: '2.4rem', margin: 0, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '4px' }}>
                 {project.title}
               </h2>
-              <p style={{ fontSize: '1rem', color: '#aaaaaa', marginTop: '8px', letterSpacing: '1px' }}>
+              <p style={{ fontSize: '1rem', color: '#cccccc', marginTop: '8px', letterSpacing: '2px' }}>
                 {project.category}
               </p>
             </div>

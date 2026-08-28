@@ -130,3 +130,28 @@ code {
   background: var(--code-bg);
 }
 
+
+/* Fixes the black screen container layout visibility inside single-page snap-scrolling */
+.carousel-section-container {
+  width: 100vw !important;
+  height: 100vh !important;
+  position: relative !important;
+  background-color: #000000 !important;
+  overflow: hidden !important;
+}
+
+/* Forces the WebGL graphics layer context up to the surface screen layers */
+.carousel-section-container canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  z-index: 50 !important; /* Positions it securely over the preceding R3F component layer leakage */
+}
+
+/* Adjusts HTML labels layer to keep titles interactive above the canvas */
+.carousel-section-container div {
+  z-index: 55 !important;
+}

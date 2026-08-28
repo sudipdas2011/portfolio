@@ -21,9 +21,9 @@ function MainPortfolioView() {
   return (
     <div className="portfolio-content snap-scroll-parent">
       <section className="snap-section"><Hero /></section>
-      {/*<section className="snap-section"><WhoAmI /></section>
-      <section className="snap-section"><WhatIDo /></section>*/}
-      <section 
+      <section className="snap-section"><WhoAmI /></section>
+      <section className="snap-section"><WhatIDo /></section>
+      {/*<section 
         className="snap-section" 
         style={{ 
           width: '100vw', 
@@ -36,7 +36,7 @@ function MainPortfolioView() {
         <Carousel />
       </section>
       <section className="snap-section"><WhoAmI /></section>
-      <section className="snap-section"><WhatIDo /></section>
+      <section className="snap-section"><WhatIDo /></section>*/}
     </div>
   );
 }
