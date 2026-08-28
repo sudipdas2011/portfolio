@@ -5,6 +5,7 @@ import Loader from './components/Loader';
 import Hero from './pages/Hero'; 
 import WhoAmI from './pages/WhoAmI'; 
 import WhatIDo from './pages/WhatIDo'; 
+import Carousel from './components/Carousel'; 
 import NotFound from './pages/404'; 
 import './App.css';
 import img1 from './assets/cards/1.jpg';
@@ -20,6 +21,20 @@ function MainPortfolioView() {
   return (
     <div className="portfolio-content snap-scroll-parent">
       <section className="snap-section"><Hero /></section>
+      {/*<section className="snap-section"><WhoAmI /></section>
+      <section className="snap-section"><WhatIDo /></section>*/}
+      <section 
+        className="snap-section" 
+        style={{ 
+          width: '100vw', 
+          height: '100vh', 
+          position: 'relative', 
+          overflow: 'hidden',
+          backgroundColor: '#000000' 
+        }}
+      >
+        <Carousel />
+      </section>
       <section className="snap-section"><WhoAmI /></section>
       <section className="snap-section"><WhatIDo /></section>
     </div>
