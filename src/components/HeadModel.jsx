@@ -11,6 +11,10 @@ function Model() {
   const modelRef = useRef();
   const { mouse } = useThree();
 
+  // Track the previous mouse position to compute real-time movement velocity vectors
+  const prevMouse = useRef(new THREE.Vector2(0, 0));
+  const currentVelocity = useRef(0);
+
   const entryState = useRef({
     currentY: -3,    
     targetY: 0,   
@@ -19,7 +23,7 @@ function Model() {
     progress: 0      
   });
 
-  // Custom Shader Material that physically warps the 3D geometry vertices
+  // Custom Shader Material that links the physical warp amplitude straight to movement velocity values
   const glowingWireframeShader = useMemo(() => {
     return new THREE.ShaderMaterial({
       wireframe: true, 
@@ -28,6 +32,7 @@ function Model() {
       uniforms: {
         uTime: { value: 0 },
         uMouse: { value: new THREE.Vector2(0, 0) }, 
+        uVelocity: { value: 0 }, // New uniform slider variable: 0.0 means completely static, 1.0 means active movement
         uColorFar: { value: new THREE.Color("#020916") },       
         uColorMidFar: { value: new THREE.Color("#0033aa") },    
         uColorMidNear: { value: new THREE.Color("#00ffbb") },   
@@ -38,6 +43,7 @@ function Model() {
       vertexShader: `
         uniform float uTime;
         uniform vec2 uMouse;
+        uniform float uVelocity; // Hooks up the real-time velocity uniform channels
         
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
@@ -47,25 +53,19 @@ function Model() {
           vLocalNormal = normalize(normal); 
           vLocalPosition = position;
           
-          // Calculate the default camera projected space first to find screen coordinates
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
           vec4 clipPosition = projectionMatrix * mvPosition;
-          vec2 ndc = clipPosition.xy / clipPosition.w; // 2D flat screen position of this vertex
+          vec2 ndc = clipPosition.xy / clipPosition.w; 
           
-          // Measure distance from the flat screen cursor to this vertex point
           float mouseDist = distance(ndc, uMouse);
-          
-          // 1. PHYSICAL GEOMETRY RIPPLE CALCULATION
-          // Radius of ripple displacement on screen (0.5 bounds)
           float rippleForce = smoothstep(0.5, 0.0, mouseDist);
-          // Smooth geometric displacement height wave equation
-          float wave = sin(mouseDist * 25.0 - uTime * 8.0) * rippleForce * 0.002; //RIPPLE INTENSITY
           
-          // 2. DISPLACE VERTICES ALONG THEIR NORMALS
-          // This physically deforms the mesh coordinates smoothly outward under your cursor
+          // MULTIPLY WAVE VALUE BY UVELOCITY
+          // If uVelocity scales down toward 0.0, the wave height drops off completely.
+          float wave = sin(mouseDist * 25.0 - uTime * 8.0) * rippleForce * 0.015 * uVelocity; //INTENSITY before uVelocity
+          
           vec3 displacedPosition = position + normal * wave;
           
-          // 3. Recalculate real position matrices using the newly warped geometry bounds
           vec4 displacedMvPosition = modelViewMatrix * vec4(displacedPosition, 1.0);
           vViewPosition = displacedMvPosition;
           
@@ -89,6 +89,7 @@ function Model() {
           p = fract(p * vec3(443.8975, 397.2973, 491.1871));
           p += dot(p.xyz, p.yzx + 19.19);
           return fract(p.x * p.y * p.z);
+          
         }
         float noise(vec3 p) {
           vec3 i = floor(p);
@@ -103,17 +104,14 @@ function Model() {
         }
 
         void main() {
-          // Core Front-to-Back View Depth Map Calculation
           float viewDepth = -vViewPosition.z;
           float normalizedDepth = (viewDepth - 3.2) / 1.5; 
           float depthMap = 1.0 - clamp(normalizedDepth, 0.0, 1.0);
 
-          // Liquid Noise Texture Overlay
           vec3 noiseCoord = vLocalPosition * 4.0 + vec3(0.0, uTime * 1.0, uTime * 0.4);
           float liquidNoise = noise(noiseCoord) * 0.12;
           float finalDepth = clamp(depthMap + liquidNoise, 0.0, 1.0);
 
-          // Multi-tier Base Color Gradient Setup
           vec3 baseGradient;
           if (finalDepth < 0.33) {
             baseGradient = mix(uColorFar, uColorMidFar, smoothstep(0.0, 0.33, finalDepth));
@@ -123,7 +121,6 @@ function Model() {
             baseGradient = mix(uColorMidNear, uColorNear, smoothstep(0.66, 1.0, finalDepth));
           }
 
-          // Local Fixed Cavity Shadow Mask
           vec3 localCenterOffset = normalize(vLocalPosition);
           float cavityFactor = dot(vLocalNormal, localCenterOffset);
           float shadowMask = smoothstep(-0.2, uShadowSpread, cavityFactor);
@@ -147,9 +144,25 @@ function Model() {
   useFrame((state) => {
     if (!modelRef.current) return;
 
-    // Send clock ticks to both the vertex and fragment shader channels synchronously
     glowingWireframeShader.uniforms.uTime.value = state.clock.getElapsedTime();
     glowingWireframeShader.uniforms.uMouse.value.set(mouse.x, mouse.y);
+
+    // 1. CALCULATE MOUSE MOVEMENT SPEED
+    // Measure distance between current pointer and previous frame position parameters
+    const distanceMoved = mouse.distanceTo(prevMouse.current);
+    
+    // Scale up the movement magnitude to get a responsive speed coefficient multiplier
+    const targetVelocity = Math.min(distanceMoved * 25.0, 1.0);
+    
+    // 2. SMOOTH VELOCITY DECAY (Easing friction dampening)
+    // If targetVelocity is 0 (mouse holds still), it dampens down smoothly via linear interpolation lerp math
+    currentVelocity.current += (targetVelocity - currentVelocity.current) * 0.1; //DECAY SPEED
+    
+    // Inject the calculated velocity track value straight into the vertex displacement controls
+    glowingWireframeShader.uniforms.uVelocity.value = currentVelocity.current;
+
+    // Cache current mouse coordinates vector for the next frame iteration calculations
+    prevMouse.current.copy(mouse);
 
     // Easing entry physics animations loops
     entryState.current.currentY += (entryState.current.targetY - entryState.current.currentY) * 0.05;
