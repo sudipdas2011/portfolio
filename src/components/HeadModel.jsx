@@ -19,34 +19,57 @@ function Model() {
     progress: 0      
   });
 
-  // Custom Shader Material that forces wireframe rendering with shader colors
+  // Custom Shader Material that physically warps the 3D geometry vertices
   const glowingWireframeShader = useMemo(() => {
     return new THREE.ShaderMaterial({
-      wireframe: true, // Crucial: Makes the base faces completely invisible/transparent
+      wireframe: true, 
       transparent: true,
       depthWrite: true,
       uniforms: {
         uTime: { value: 0 },
+        uMouse: { value: new THREE.Vector2(0, 0) }, 
         uColorFar: { value: new THREE.Color("#020916") },       
         uColorMidFar: { value: new THREE.Color("#0033aa") },    
         uColorMidNear: { value: new THREE.Color("#00ffbb") },   
         uColorNear: { value: new THREE.Color("#ccff00") },      
-        uShadowDarkness: { value: 0.05 }, // Controlled thickness shadow depth base
+        uShadowDarkness: { value: 0.05 }, 
         uShadowSpread: { value: 0.4 }      
       },
       vertexShader: `
+        uniform float uTime;
+        uniform vec2 uMouse;
+        
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
         
         void main() {
-          vLocalPosition = position;
           vLocalNormal = normalize(normal); 
+          vLocalPosition = position;
           
+          // Calculate the default camera projected space first to find screen coordinates
           vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          vViewPosition = mvPosition;
+          vec4 clipPosition = projectionMatrix * mvPosition;
+          vec2 ndc = clipPosition.xy / clipPosition.w; // 2D flat screen position of this vertex
           
-          gl_Position = projectionMatrix * mvPosition;
+          // Measure distance from the flat screen cursor to this vertex point
+          float mouseDist = distance(ndc, uMouse);
+          
+          // 1. PHYSICAL GEOMETRY RIPPLE CALCULATION
+          // Radius of ripple displacement on screen (0.5 bounds)
+          float rippleForce = smoothstep(0.5, 0.0, mouseDist);
+          // Smooth geometric displacement height wave equation
+          float wave = sin(mouseDist * 25.0 - uTime * 8.0) * rippleForce * 0.002; //RIPPLE INTENSITY
+          
+          // 2. DISPLACE VERTICES ALONG THEIR NORMALS
+          // This physically deforms the mesh coordinates smoothly outward under your cursor
+          vec3 displacedPosition = position + normal * wave;
+          
+          // 3. Recalculate real position matrices using the newly warped geometry bounds
+          vec4 displacedMvPosition = modelViewMatrix * vec4(displacedPosition, 1.0);
+          vViewPosition = displacedMvPosition;
+          
+          gl_Position = projectionMatrix * displacedMvPosition;
         }
       `,
       fragmentShader: `
@@ -62,7 +85,6 @@ function Model() {
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
 
-        // 3D Simplex-style Noise for fluid ripples inside lines
         float hash(vec3 p) {
           p = fract(p * vec3(443.8975, 397.2973, 491.1871));
           p += dot(p.xyz, p.yzx + 19.19);
@@ -81,17 +103,17 @@ function Model() {
         }
 
         void main() {
-          // 1. Core Front-to-Back View Depth Map Calculation
+          // Core Front-to-Back View Depth Map Calculation
           float viewDepth = -vViewPosition.z;
           float normalizedDepth = (viewDepth - 3.2) / 1.5; 
           float depthMap = 1.0 - clamp(normalizedDepth, 0.0, 1.0);
 
-          // 2. Liquid Distortion Warp Overlay using local tracking
+          // Liquid Noise Texture Overlay
           vec3 noiseCoord = vLocalPosition * 4.0 + vec3(0.0, uTime * 1.0, uTime * 0.4);
           float liquidNoise = noise(noiseCoord) * 0.12;
           float finalDepth = clamp(depthMap + liquidNoise, 0.0, 1.0);
 
-          // 3. Multi-tier Base Color Gradient Setup
+          // Multi-tier Base Color Gradient Setup
           vec3 baseGradient;
           if (finalDepth < 0.33) {
             baseGradient = mix(uColorFar, uColorMidFar, smoothstep(0.0, 0.33, finalDepth));
@@ -101,23 +123,19 @@ function Model() {
             baseGradient = mix(uColorMidNear, uColorNear, smoothstep(0.66, 1.0, finalDepth));
           }
 
-          // 4. Local Fixed Cavity Shadow Mask
+          // Local Fixed Cavity Shadow Mask
           vec3 localCenterOffset = normalize(vLocalPosition);
           float cavityFactor = dot(vLocalNormal, localCenterOffset);
           float shadowMask = smoothstep(-0.2, uShadowSpread, cavityFactor);
           float jointShadow = mix(uShadowDarkness, 1.0, shadowMask);
 
-          // 5. Apply the occlusion dark multiplying straight into the wire lines
-          vec3 finalWireColor = baseGradient * jointShadow;
-
-          gl_FragColor = vec4(finalWireColor, 1.0);
+          gl_FragColor = vec4(baseGradient * jointShadow, 1.0);
         }
       `,
       side: THREE.DoubleSide
     });
   }, []);
 
-  // Map the single wireframe shader across the scene graph tree
   useMemo(() => {
     scene.traverse((child) => {
       if (child.isMesh) {
@@ -129,9 +147,11 @@ function Model() {
   useFrame((state) => {
     if (!modelRef.current) return;
 
-    // Direct temporal ticks to animate the fluid glow through the mesh lattice
+    // Send clock ticks to both the vertex and fragment shader channels synchronously
     glowingWireframeShader.uniforms.uTime.value = state.clock.getElapsedTime();
+    glowingWireframeShader.uniforms.uMouse.value.set(mouse.x, mouse.y);
 
+    // Easing entry physics animations loops
     entryState.current.currentY += (entryState.current.targetY - entryState.current.currentY) * 0.05;
     entryState.current.currentAngleOffset += (entryState.current.targetAngleOffset - entryState.current.currentAngleOffset) * 0.05;
 
@@ -146,7 +166,6 @@ function Model() {
 
   return (
     <group ref={modelRef} position={[0, -4, 0]} scale={2.2} rotation={[0, -Math.PI, 0]}>
-      {/* We only render the primitive once now, completely bypassing the solid background layer */}
       <primitive object={scene} />
     </group>
   );
@@ -165,8 +184,7 @@ export default function HeadModel() {
         </Suspense>
 
         <EffectComposer>
-          {/* The bloom will catch the glowing wireframe lines, making them look like neon light filaments */}
-          <Bloom intensity={.6} luminanceThreshold={0.05} luminanceSmoothing={0.7} />
+          <Bloom intensity={0.6} luminanceThreshold={0.05} luminanceSmoothing={0.7} />
         </EffectComposer>
       </Canvas>
     </div>
