@@ -743,3 +743,60 @@ html {
   color: #000000;
   animation: scroll-bounce 1.4s ease-in-out infinite;
 }
+
+
+/* --- BRUTALIST SEAMLESS NAVIGATION CONTROLS --- */
+
+.hide-global-cursor {
+  cursor: none !important;
+}
+
+/* Blocks global Cursor.jsx layout indicators when interacting with navigation zones */
+.hide-global-cursor ~ .cursor,
+.hide-global-cursor ~ #custom-cursor-container,
+.hide-global-cursor * {
+  cursor: none !important;
+}
+
+
+/* --- EDGE HOVER ACTION SYSTEM BOUNDS --- */
+/* --- BRUTALIST SEAMLESS EDGE TRACKING LAYOUT --- */
+/* --- BRUTALIST SEAMLESS EDGE TRACKING LAYOUT --- */
+
+.edge-trigger-zone {
+  position: absolute;
+  top: 0;
+  width: 25vw;
+  height: 100vh;
+  z-index: 95; /* Keeps hover bounds layered safely above your WebGL viewport layers */
+  pointer-events: auto;
+  background: transparent;
+}
+
+.left-edge-zone {
+  left: 0;
+}
+
+.right-edge-zone {
+  right: 0;
+}
+
+/* Forces your default cursor square to hide while hovering over the edge triggers */
+.edge-trigger-zone:hover ~ .cursor,
+.edge-trigger-zone:hover ~ #custom-cursor-container {
+  opacity: 0 !important;
+  width: 0px !important;
+  height: 0px !important;
+  pointer-events: none !important;
+}
+
+.fixed-canvas-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) !important;
+  width: 50vw;
+  height: 50vh;
+  z-index: 5;
+  pointer-events: none;
+}
