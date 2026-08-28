@@ -1,54 +1,61 @@
 import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Work3D from "../components/Work3D";
 
-function TextRise({ text, className, onComplete }) {
-  const containerRef = useRef(null);
+function TextRise({ text, className, onExitComplete }) {
+  const [shouldExit, setShouldExit] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (onComplete) onComplete();
+    // 1. Holds the text fully visible and readable for 1.6 seconds
+    const holdTimer = setTimeout(() => {
+      setShouldExit(true);
     }, 1600);
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+
+    return () => clearTimeout(holdTimer);
+  }, []);
 
   return (
-    <div ref={containerRef} className={className} style={{ overflow: "hidden" }}>
-      {text.split("").map((char, idx) => (
-        <motion.span
-          key={idx}
-          initial={{ y: "110%", opacity: 0 }}
-          animate={{ 
-            y: ["110%", "0%", "-50%"], 
-            opacity: [0, 1, 0] // Corrected keyframe array format
-          }}
-          transition={{
-            times: [0, 0.35, 1],
-            duration: 1.6,
-            ease: [0.16, 1, 0.3, 1],
-            delay: idx * 0.04
-          }}
-          style={{
-            display: "inline-block",
-            whiteSpace: char === " " ? "pre" : "normal",
-            willChange: "transform, opacity"
-          }}
-        >
-          {char}
-        </motion.span>
-      ))}
-    </div>
+    <AnimatePresence onExitComplete={onExitComplete}>
+      {!shouldExit && (
+        <div className={className} style={{ overflow: "hidden", display: "flex", justifyContent: "center" }}>
+          {text.split("").map((char, idx) => (
+            <motion.span
+              key={idx}
+              initial={{ y: "115%", opacity: 0 }}
+              animate={{ y: "0%", opacity: 1 }}
+              exit={{ 
+                y: "-115%", 
+                opacity: 0, 
+                transition: { duration: 0.6, ease: [0.76, 0, 0.24, 1] } 
+              }}
+              transition={{
+                duration: 0.8,
+                ease: [0.16, 1, 0.3, 1],
+                delay: idx * 0.04
+              }}
+              style={{
+                display: "inline-block",
+                whiteSpace: char === " " ? "pre" : "normal",
+                willChange: "transform, opacity"
+              }}
+            >
+              {char}
+            </motion.span>
+          ))}
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
 
-function Arrow({ trail, range, lookAt, sections }) {
+function Arrow({ sections }) {
   return (
     <div 
       className="arrow-guide-context" 
-      data-trail={trail ? "true" : "false"}
-      data-range={range}
-      data-look-x={lookAt.x}
-      data-look-y={lookAt.y}
+      data-trail="false"
+      data-range="bottom"
+      data-look-x="center"
+      data-look-y="bottom"
       data-allowed-sections={JSON.stringify(sections)}
     >
       <span className="arrow-icon-element">↓</span>
@@ -59,23 +66,21 @@ function Arrow({ trail, range, lookAt, sections }) {
 export default function WhatIDo() {
   const sectionRef = useRef(null);
   const mousePos = useRef({ x: 0, y: 0 });
-  const [isInView, setIsInView] = useState(false);
-  const [textDone, setTextDone] = useState(false);
+  const [animationStage, setAnimationStage] = useState("idle"); // "idle" | "text" | "cube"
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        // Lower threshold handles the overlap issue with snap tracks
-        if (entry.isIntersecting) {
-          setIsInView(true);
+        if (entry.intersectionRatio >= 0.85 && animationStage === "idle") {
+          setAnimationStage("text");
         }
       },
-      { threshold: 0.1 } 
+      { threshold: [0, 0.85, 1.0] }
     );
 
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [animationStage]);
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -92,33 +97,34 @@ export default function WhatIDo() {
     <div ref={sectionRef} className="what-section" id="what-stage">
       <div className="sticky-viewport-track">
         
-        {isInView && !textDone && (
+        {/* Stage 1: Text Rise & Text Fade-Out Sequence */}
+        {animationStage === "text" && (
           <div className="intro-text-layer">
             <TextRise
               text="WHAT I DO ?"
               className="hero-heading"
-              onComplete={() => setTextDone(true)}
+              // Fires strictly AFTER the exit animation finishes fading out entirely
+              onExitComplete={() => setAnimationStage("cube")}
             />
           </div>
         )}
 
-        {textDone && (
+        {/* Stage 2: Smooth Cube Entrance Sequence */}
+        {animationStage === "cube" && (
           <motion.div
-            initial={{ y: "30vh", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
+            initial={{ y: "100vh", opacity: 0, rotateX: 75, rotateY: -45, scale: 0.3 }}
+            animate={{ y: 0, opacity: 1, rotateX: 0, rotateY: 0, scale: 1 }}
+            transition={{ 
+              duration: 1.5, 
+              ease: [0.16, 1, 0.3, 1] // Pure cinematic curve matching WhoAmI
+            }}
             className="fixed-canvas-wrapper"
           >
-            <Work3D activeIndex={0} mousePos={mousePos} />
+            <Work3D mousePos={mousePos} />
           </motion.div>
         )}
 
-        <Arrow
-          trail={false}
-          range="bottom"
-          lookAt={{ x: "center", y: "bottom" }}
-          sections={[".what-section", "#what-stage"]}
-        />
+        <Arrow sections={[".what-section", "#what-stage"]} />
 
       </div>
     </div>

@@ -664,18 +664,25 @@ html {
 /* --- WHAT I DO: TEXTRISE AND HORIZONTAL PIPELINE SYSTEM --- */
 /* --- MINIMALIST 3D MANIFESTO CORE --- */
 /* --- WHAT I DO: ATOMIC ISOLATED PIPELINE SYSTEM --- */
+/* --- THE ISOLATED 3D MANIFESTO TIMELINE ENGINE --- */
+/* --- FIXED BRUTALIST SEAMLESS ANIMATION PIPELINE --- */
+/* --- WHAT I DO ARCHITECTURE STYLES --- */
 
 .what-section {
   position: relative;
   width: 100vw;
-  height: 100vh; /* Clean, locked single viewport frame page section */
+  height: 100vh;
   background-color: #000000;
   overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  isolation: isolate !important;
 }
 
 .sticky-viewport-track {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -692,6 +699,21 @@ html {
   justify-content: center;
   z-index: 10;
   pointer-events: none;
+  filter: invert(1) brightness(2) !important;
+  transform: translate3d(0, 0, 0);
+}
+
+.what-section .hero-heading {
+  font-size: calc(var(--orbit-radius) * 0.38);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  color: #000000 !important; /* Inverts cleanly to white inside the black section */
 }
 
 .fixed-canvas-wrapper {
@@ -699,25 +721,25 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) !important;
-  width: 60vw;
-  height: 60vh;
+  width: 65vw;
+  height: 65vh;
   z-index: 5;
   pointer-events: none;
 }
 
-/* Arrow layout system anchor alignments */
 .arrow-guide-context {
   position: absolute;
   bottom: 40px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
-  color: #ffffff;
   pointer-events: none;
+  filter: invert(1) brightness(2) !important;
 }
 
 .arrow-icon-element {
   display: block;
-  font-size: 24px;
+  font-size: 26px;
+  color: #000000;
   animation: scroll-bounce 1.4s ease-in-out infinite;
 }
