@@ -1,8 +1,8 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 
 export default function Arrow({
-  range = 'bottom',
-  lookAt = { x: 'center', y: 'bottom' },
+  range = "bottom",
+  lookAt,
   smooth = 0.12,
   trail = false,
   sections = [],
@@ -10,10 +10,8 @@ export default function Arrow({
   onMove,
 }) {
   const mouse = useRef({
-    x: 0,
-    y: 0,
-    lastX: 0,
-    lastY: 0,
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2,
   });
 
   const arrow = useRef({
@@ -22,16 +20,21 @@ export default function Arrow({
     angle: 0,
   });
 
-  const points = useRef([]);
+  const activeRef = useRef(false);
+
   const arrowRef = useRef(null);
   const canvasRef = useRef(null);
-  const activeRef = useRef(false);
+  const points = useRef([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
+    const ctx = canvas?.getContext("2d");
 
     let frame;
+
+    /* ----------------------------------------------------------
+       RESIZE
+    ---------------------------------------------------------- */
 
     const resize = () => {
       if (!canvas) return;
@@ -40,11 +43,19 @@ export default function Arrow({
       canvas.height = window.innerHeight;
     };
 
-    const move = (e) => {
-      mouse.current.x = e.clientX;
-      mouse.current.y = e.clientY;
+    /* ----------------------------------------------------------
+       MOUSE
+    ---------------------------------------------------------- */
 
-      if (trail && e.clientY > window.innerHeight * 0.75) {
+    const move = (event) => {
+      mouse.current.x = event.clientX;
+      mouse.current.y = event.clientY;
+
+      if (
+        trail &&
+        event.clientY >
+          window.innerHeight * 0.75
+      ) {
         points.current.push({
           x: arrow.current.x,
           y: arrow.current.y,
@@ -56,181 +67,429 @@ export default function Arrow({
       }
     };
 
-    const update = () => {
-      const { x, y, lastX, lastY } = mouse.current;
+    /* ----------------------------------------------------------
+       TARGET
+       
+       The important part:
+       
+       LEFT  → left edge, vertical CENTER
+       RIGHT → right edge, vertical CENTER
+       
+       Never bottom.
+       Never top.
+    ---------------------------------------------------------- */
+
+    const getTarget = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
 
-      const vx = x - lastX;
-      const vy = y - lastY;
-      const speed = Math.hypot(vx, vy);
-
-      mouse.current.lastX = x;
-      mouse.current.lastY = y;
-
-      let allowed = true;
-
-      if (sections.length) {
-        const target = document.elementFromPoint(x, y);
-
-        allowed = target
-          ? sections.some((selector) => target.closest(selector))
-          : false;
+      if (range === "left") {
+        return {
+          x: 0,
+          y: height / 2,
+        };
       }
 
-      let active = false;
-
-      if (allowed) {
-        if (range === 'bottom') active = y > height * 0.75;
-        if (range === 'top') active = y < height * 0.25;
-        if (range === 'left') active = x < width * 0.25;
-        if (range === 'right') active = x > width * 0.75;
+      if (range === "right") {
+        return {
+          x: width,
+          y: height / 2,
+        };
       }
 
-      if (active !== activeRef.current) {
-        activeRef.current = active;
+      if (range === "top") {
+        return {
+          x: width / 2,
+          y: 0,
+        };
+      }
+
+      if (range === "bottom") {
+        return {
+          x: width / 2,
+          y: height,
+        };
+      }
+
+      /*
+       * Fallback to explicit lookAt if supplied.
+       */
+
+      let x = width / 2;
+      let y = height / 2;
+
+      if (lookAt) {
+        if (typeof lookAt.x === "number") {
+          x = lookAt.x;
+        } else if (lookAt.x === "left") {
+          x = 0;
+        } else if (lookAt.x === "right") {
+          x = width;
+        } else if (lookAt.x === "center") {
+          x = width / 2;
+        }
+
+        if (typeof lookAt.y === "number") {
+          y = lookAt.y;
+        } else if (lookAt.y === "top") {
+          y = 0;
+        } else if (lookAt.y === "bottom") {
+          y = height;
+        } else if (lookAt.y === "center") {
+          y = height / 2;
+        }
+      }
+
+      return { x, y };
+    };
+
+    /* ----------------------------------------------------------
+       SECTION CHECK
+    ---------------------------------------------------------- */
+
+    const isInsideAllowedSection = (
+      x,
+      y
+    ) => {
+      if (!sections.length) {
+        return true;
+      }
+
+      const element =
+        document.elementFromPoint(x, y);
+
+      if (!element) {
+        return false;
+      }
+
+      return sections.some(
+        (selector) =>
+          element.closest(selector)
+      );
+    };
+
+    /* ----------------------------------------------------------
+       RANGE CHECK
+    ---------------------------------------------------------- */
+
+    const isInsideRange = (
+      x,
+      y
+    ) => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      if (range === "left") {
+        return x < width * 0.25;
+      }
+
+      if (range === "right") {
+        return x > width * 0.75;
+      }
+
+      if (range === "top") {
+        return y < height * 0.25;
+      }
+
+      if (range === "bottom") {
+        return y > height * 0.75;
+      }
+
+      return false;
+    };
+
+    /* ----------------------------------------------------------
+       ANGLE NORMALIZATION
+    ---------------------------------------------------------- */
+
+    const normalizeAngle = (
+      angle
+    ) => {
+      while (angle > 180) {
+        angle -= 360;
+      }
+
+      while (angle < -180) {
+        angle += 360;
+      }
+
+      return angle;
+    };
+
+    /* ----------------------------------------------------------
+       UPDATE LOOP
+    ---------------------------------------------------------- */
+
+    const update = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      const mouseX =
+        mouse.current.x;
+
+      const mouseY =
+        mouse.current.y;
+
+      const allowed =
+        isInsideAllowedSection(
+          mouseX,
+          mouseY
+        );
+
+      const insideRange =
+        isInsideRange(
+          mouseX,
+          mouseY
+        );
+
+      const active =
+        allowed &&
+        insideRange;
+
+      /* --------------------------------------------------------
+         ACTIVE STATE
+      -------------------------------------------------------- */
+
+      if (
+        active !==
+        activeRef.current
+      ) {
+        activeRef.current =
+          active;
+
         onChange?.(active);
       }
 
-      const root = document.documentElement;
+      /* --------------------------------------------------------
+         CURSOR MASK
+      -------------------------------------------------------- */
+
+      const root =
+        document.documentElement;
 
       if (active) {
         root.style.setProperty(
-          '--mask-clip-override',
-          'polygon(0 0, 0 0, 0 0, 0 0)'
+          "--mask-clip-override",
+          "polygon(0 0, 0 0, 0 0, 0 0)"
         );
-        root.style.setProperty('--mask-opacity', '0');
+
+        root.style.setProperty(
+          "--mask-opacity",
+          "0"
+        );
       } else {
-        root.style.removeProperty('--mask-clip-override');
-        root.style.setProperty('--mask-opacity', '1');
+        root.style.removeProperty(
+          "--mask-clip-override"
+        );
+
+        root.style.setProperty(
+          "--mask-opacity",
+          "1"
+        );
       }
 
+      /* --------------------------------------------------------
+         TRAIL
+      -------------------------------------------------------- */
+
       if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
 
-        if (trail && active) {
-          points.current.forEach((point, i) => {
-            const size = 10 + i * 1.2;
+        if (
+          trail &&
+          active
+        ) {
+          points.current.forEach(
+            (point, index) => {
+              const size =
+                10 +
+                index * 1.2;
 
-            ctx.fillStyle = '#fff';
-            ctx.beginPath();
-            ctx.arc(
-              point.x,
-              point.y,
-              size,
-              0,
-              Math.PI * 2
-            );
-            ctx.fill();
-          });
+              ctx.fillStyle =
+                "#fff";
+
+              ctx.beginPath();
+
+              ctx.arc(
+                point.x,
+                point.y,
+                size,
+                0,
+                Math.PI * 2
+              );
+
+              ctx.fill();
+            }
+          );
         } else {
           points.current = [];
         }
       }
 
-      const el = arrowRef.current;
+      /* --------------------------------------------------------
+         ARROW
+      -------------------------------------------------------- */
 
-      if (el) {
-        if (active) {
-          onMove?.({
-            x,
-            y,
-            speed,
-          });
+      const element =
+        arrowRef.current;
 
-          let targetX = width / 2;
-          let targetY = height;
-
-          if (typeof lookAt.x === 'number') {
-            targetX = lookAt.x;
-          } else if (lookAt.x === 'left') {
-            targetX = 0;
-          } else if (lookAt.x === 'right') {
-            targetX = width;
-          }
-
-          if (typeof lookAt.y === 'number') {
-            targetY = lookAt.y;
-          } else if (lookAt.y === 'top') {
-            targetY = 0;
-          } else if (lookAt.y === 'bottom') {
-            targetY = height;
-          }
-
-          const targetAngle = Math.atan2(
-            targetY - y,
-            targetX - x
+      if (!element) {
+        frame =
+          requestAnimationFrame(
+            update
           );
 
-          const moveAngle =
-            speed > 1.5
-              ? Math.atan2(vy, vx)
-              : targetAngle;
-
-          let angle = targetAngle;
-
-          if (speed > 1.5) {
-            angle =
-              targetAngle * 0.7 +
-              moveAngle * 0.3;
-          }
-
-          const degrees = angle * (180 / Math.PI);
-
-          let diff = degrees - arrow.current.angle;
-
-          if (diff > 180) diff -= 360;
-          if (diff < -180) diff += 360;
-
-          arrow.current.x +=
-            (x - arrow.current.x) * smooth;
-
-          arrow.current.y +=
-            (y - arrow.current.y) * smooth;
-
-          arrow.current.angle += diff * smooth;
-
-          el.style.transform =
-            `translate3d(${arrow.current.x}px, ${arrow.current.y}px, 0) ` +
-            `rotate(${arrow.current.angle}deg)`;
-
-          el.style.opacity = '1';
-        } else {
-          arrow.current.x = x;
-          arrow.current.y = y;
-
-          el.style.transform =
-            `translate3d(${x}px, ${y}px, 0) ` +
-            `rotate(${arrow.current.angle}deg) ` +
-            `scale(0)`;
-
-          el.style.opacity = '0';
-        }
+        return;
       }
 
-      frame = requestAnimationFrame(update);
+      if (active) {
+        /*
+         * Smoothly move arrow to cursor.
+         */
+
+        arrow.current.x +=
+          (mouseX -
+            arrow.current.x) *
+          smooth;
+
+        arrow.current.y +=
+          (mouseY -
+            arrow.current.y) *
+          smooth;
+
+        /*
+         * ----------------------------------------------------
+         * CRITICAL FIX
+         *
+         * Calculate the direction from the ARROW'S CURRENT
+         * POSITION to the EDGE MIDPOINT.
+         *
+         * This means the arrow actually looks at the point
+         * instead of calculating from the raw cursor.
+         * ----------------------------------------------------
+         */
+
+        const target =
+          getTarget();
+
+        const dx =
+          target.x -
+          arrow.current.x;
+
+        const dy =
+          target.y -
+          arrow.current.y;
+
+        const targetAngle =
+          Math.atan2(
+            dy,
+            dx
+          ) *
+          (180 / Math.PI);
+
+        const difference =
+          normalizeAngle(
+            targetAngle -
+              arrow.current.angle
+          );
+
+        arrow.current.angle +=
+          difference *
+          smooth;
+
+        /*
+         * Apply position FIRST,
+         * rotation SECOND.
+         */
+
+        element.style.transform =
+          `translate3d(` +
+          `${arrow.current.x}px, ` +
+          `${arrow.current.y}px, 0) ` +
+          `rotate(` +
+          `${arrow.current.angle}deg) ` +
+          `scale(1)`;
+
+        element.style.opacity =
+          "1";
+
+        onMove?.({
+          x: mouseX,
+          y: mouseY,
+          targetX: target.x,
+          targetY: target.y,
+        });
+      } else {
+        /*
+         * Keep the arrow attached to the cursor while hidden.
+         */
+
+        arrow.current.x =
+          mouseX;
+
+        arrow.current.y =
+          mouseY;
+
+        element.style.transform =
+          `translate3d(` +
+          `${mouseX}px, ` +
+          `${mouseY}px, 0) ` +
+          `rotate(` +
+          `${arrow.current.angle}deg) ` +
+          `scale(0)`;
+
+        element.style.opacity =
+          "0";
+      }
+
+      frame =
+        requestAnimationFrame(
+          update
+        );
     };
 
     resize();
 
-    window.addEventListener('resize', resize);
-    window.addEventListener('mousemove', move);
+    window.addEventListener(
+      "resize",
+      resize
+    );
 
-    frame = requestAnimationFrame(update);
+    window.addEventListener(
+      "mousemove",
+      move
+    );
+
+    frame =
+      requestAnimationFrame(
+        update
+      );
 
     return () => {
       cancelAnimationFrame(frame);
 
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', move);
+      window.removeEventListener(
+        "resize",
+        resize
+      );
+
+      window.removeEventListener(
+        "mousemove",
+        move
+      );
 
       document.documentElement.style.removeProperty(
-        '--mask-clip-override'
+        "--mask-clip-override"
       );
 
       document.documentElement.style.setProperty(
-        '--mask-opacity',
-        '1'
+        "--mask-opacity",
+        "1"
       );
     };
   }, [
@@ -260,14 +519,21 @@ export default function Arrow({
             <feColorMatrix
               in="blur"
               mode="matrix"
-              values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 35 -11"
+              values="
+                1 0 0 0 0
+                0 1 0 0 0
+                0 0 1 0 0
+                0 0 0 35 -11
+              "
             />
           </filter>
         </defs>
       </svg>
 
       <div className="trail">
-        <canvas ref={canvasRef} />
+        <canvas
+          ref={canvasRef}
+        />
       </div>
 
       <div

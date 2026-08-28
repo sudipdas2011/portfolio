@@ -12,39 +12,41 @@ function WorkObject({ activeIndex = 0 }) {
   const materialRef = useRef(null);
 
   const geometry = useMemo(() => {
-    switch (activeIndex) {
-      case 1:
-        return new THREE.BoxGeometry(
-          1.65,
-          1.65,
-          1.65,
-          3,
-          3,
-          3
-        );
-
-      case 2:
-        return new THREE.TorusGeometry(
-          1.05,
-          0.34,
-          24,
-          72
-        );
-
-      default:
-        return new THREE.IcosahedronGeometry(
-          1.28,
-          2
-        );
+    if (activeIndex === 1) {
+      return new THREE.BoxGeometry(
+        1.65,
+        1.65,
+        1.65,
+        3,
+        3,
+        3
+      );
     }
+
+    if (activeIndex === 2) {
+      return new THREE.TorusGeometry(
+        1.05,
+        0.34,
+        24,
+        72
+      );
+    }
+
+    return new THREE.IcosahedronGeometry(
+      1.28,
+      2
+    );
   }, [activeIndex]);
 
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
     /*
-     * Different forms have slightly different poses.
+     * ----------------------------------------------------------
+     * PAGE-SPECIFIC POSE
+     * ----------------------------------------------------------
      */
+
     const targetRotation = {
       x:
         activeIndex === 0
@@ -65,6 +67,10 @@ function WorkObject({ activeIndex = 0 }) {
           ? 0.25
           : 0,
     };
+
+    /*
+     * Smooth rotation.
+     */
 
     groupRef.current.rotation.x =
       THREE.MathUtils.damp(
@@ -91,15 +97,21 @@ function WorkObject({ activeIndex = 0 }) {
       );
 
     /*
-     * Constant subtle rotation.
+     * Subtle continuous rotation.
      */
+
     groupRef.current.rotation.y +=
       delta *
-      (activeIndex === 2 ? 0.45 : 0.22);
+      (activeIndex === 2
+        ? 0.45
+        : 0.22);
 
     /*
-     * Slight size variation between pages.
+     * ----------------------------------------------------------
+     * SCALE
+     * ----------------------------------------------------------
      */
+
     const targetScale =
       activeIndex === 0
         ? 1
@@ -107,12 +119,9 @@ function WorkObject({ activeIndex = 0 }) {
           ? 0.92
           : 1.05;
 
-    const currentScale =
-      groupRef.current.scale.x;
-
     const nextScale =
       THREE.MathUtils.damp(
-        currentScale,
+        groupRef.current.scale.x,
         targetScale,
         3.5,
         delta
@@ -123,12 +132,16 @@ function WorkObject({ activeIndex = 0 }) {
     );
 
     /*
-     * Smoothly change refraction thickness.
+     * ----------------------------------------------------------
+     * GLASS THICKNESS
+     * ----------------------------------------------------------
      */
+
     if (materialRef.current) {
       materialRef.current.thickness =
         THREE.MathUtils.damp(
-          materialRef.current.thickness,
+          materialRef.current
+            .thickness,
           activeIndex === 2
             ? 0.9
             : 0.65,
@@ -146,7 +159,7 @@ function WorkObject({ activeIndex = 0 }) {
         floatIntensity={0.25}
       >
         {/* =====================================================
-            MAIN REFRACTIVE OBJECT
+            REFRACTIVE GLASS OBJECT
         ===================================================== */}
 
         <mesh geometry={geometry}>
@@ -168,7 +181,7 @@ function WorkObject({ activeIndex = 0 }) {
         </mesh>
 
         {/* =====================================================
-            VERY SUBTLE STRUCTURAL EDGE
+            SUBTLE WIREFRAME STRUCTURE
         ===================================================== */}
 
         <mesh
@@ -190,25 +203,19 @@ function WorkObject({ activeIndex = 0 }) {
 function Scene({ activeIndex }) {
   return (
     <>
-      {/* BASE LIGHT */}
-
-      <ambientLight intensity={0.35} />
-
-      {/* KEY LIGHT */}
+      <ambientLight
+        intensity={0.35}
+      />
 
       <directionalLight
         position={[3, 4, 5]}
         intensity={3}
       />
 
-      {/* FRONT / SIDE LIGHT */}
-
       <pointLight
         position={[-3, -2, 4]}
         intensity={2}
       />
-
-      {/* RIM LIGHT */}
 
       <pointLight
         position={[3, 1, -3]}
@@ -219,9 +226,9 @@ function Scene({ activeIndex }) {
         activeIndex={activeIndex}
       />
 
-      {/* Environment is important for the glass/refraction. */}
-
-      <Environment preset="studio" />
+      <Environment
+        preset="studio"
+      />
     </>
   );
 }
