@@ -1,14 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createCarousel } from '../gl/scene';
-import { createScrollController } from '../gl/scroll';
-import { config } from '../gl/config';
 
 const Carousel = () => {
-  const containerRef = useRef(null);
   const canvasRef = useRef(null);
-  const scrollEngineRef = useRef(null);
   const cleanupFunctionRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     let animationFrameId;
@@ -16,7 +12,6 @@ const Carousel = () => {
 
     const initializeEngine = () => {
       if (isDestroyed) return;
-      
       if (!canvasRef.current) {
         animationFrameId = requestAnimationFrame(initializeEngine);
         return;
@@ -24,10 +19,7 @@ const Carousel = () => {
 
       try {
         cleanupFunctionRef.current = createCarousel(canvasRef.current, {
-          onActiveChange: (idx) => {
-            console.log(`🎯 Active card: ${idx}`);
-            setScrollProgress(idx);
-          }
+          onActiveChange: (idx) => setActiveIndex(idx)
         });
       } catch (err) {
         console.error("Carousel error:", err);
@@ -39,30 +31,24 @@ const Carousel = () => {
     return () => {
       isDestroyed = true;
       cancelAnimationFrame(animationFrameId);
-      if (typeof cleanupFunctionRef.current === 'function') {
-        cleanupFunctionRef.current();
-      }
+      cleanupFunctionRef.current?.();
     };
   }, []);
 
+  const filenames = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg', '6.jpg'];
+
   return (
     <div 
-      ref={containerRef} 
-      id="carousel-container"
-      className="carousel-section-container"
       style={{
         width: '100%',
         height: '100%',
         position: 'relative',
         background: '#000000',
-        userSelect: 'none',
-        zIndex: 30
+        overflow: 'hidden'
       }}
     >
-      {/* WebGL Canvas Component Target */}
       <canvas 
         ref={canvasRef} 
-        id="canvas" 
         style={{ 
           position: 'absolute', 
           top: 0, 
@@ -74,50 +60,76 @@ const Carousel = () => {
         }} 
       />
       
-      {/* Floating Meta Project Details Labels Overlay Layer */}
+      {/* Menu at Bottom Right */}
       <div 
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          width: '100%', 
-          height: '100%', 
-          pointerEvents: 'none', 
-          zIndex: 32, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          fontFamily: 'monospace' 
+        style={{
+          position: 'absolute',
+          bottom: '40px',
+          right: '40px',
+          zIndex: 32,
+          background: '#000000',
+          border: '1px solid #333',
+          borderRadius: '0px',
+          overflow: 'hidden',
+          width: '25vw',
+          display: 'flex',
+          flexDirection: 'column',
+          scrollbarWidth: 'none'
         }}
       >
-        {config.PROJECTS?.map((project, index) => {
-          const offset = index - scrollProgress;
-          const visible = Math.abs(offset) < 1.5;
-          return (
-            <div 
-              key={project.id || index} 
-              style={{ 
-                position: 'absolute', 
-                transform: `translateY(${offset * 120}px)`, 
-                opacity: Math.max(0, 1 - Math.abs(offset) * 1.5), 
-                display: visible ? 'block' : 'none', 
-                textAlign: 'center', 
-                color: '#ffffff' 
+        <style>{`
+          .carousel-menu::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
+        <div 
+          className="carousel-menu"
+          style={{ 
+            flex: 1, 
+            overflowY: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+        >
+          {filenames.map((filename, index) => (
+            <div
+              key={index}
+              style={{
+                padding: '2px 5px',
+                fontSize: '13px',
+                fontFamily: 'monospace',
+                color: activeIndex === index ? '#000000' : '#888888',
+                background: activeIndex === index ? '#ffffff' : '#000000',
+                borderLeft: activeIndex === index ? '3px solid #ffffff' : '3px solid #000000',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                letterSpacing: '0.5px',
+                whiteSpace: 'nowrap',
+                fontWeight: activeIndex === index ? '600' : 'normal',
+                userSelect: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (activeIndex !== index) {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                  e.target.style.color = '#ffffff';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (activeIndex !== index) {
+                  e.target.style.background = '#000000';
+                  e.target.style.color = '#888888';
+                }
               }}
             >
-              <h2 style={{ fontSize: '2.4rem', margin: 0, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '4px' }}>
-                {project.title}
-              </h2>
-              <p style={{ fontSize: '1rem', color: '#cccccc', marginTop: '8px', letterSpacing: '2px' }}>
-                {project.category}
-              </p>
+              {filename}
             </div>
-          );
-        })}
+          ))}
+        </div>
       </div>
     </div>
   );
 };
 
 export default Carousel;
+
+// 

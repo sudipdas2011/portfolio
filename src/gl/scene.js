@@ -8,28 +8,19 @@ import { createTrail } from "./trail.js";
 import { createGui } from "./gui.js";
 import { hexToSRGB } from "./color.js";
 
-// A texture request that neither loads nor errors — a hung connection — would
-// hold the entry forever, and the frame behind it is empty. Start anyway.
 const ENTRY_WAIT_LIMIT = 5000;
 
-// [vertical, horizontal] weights per mode. "both" runs each below full so
-// combining them doesn't double the deflection.
 const BEND_WEIGHTS = {
   vertical: [1, 0],
   horizontal: [0, 1],
   both: [0.7, 0.7],
 };
 
-// Asymmetric ease — separate rates for rising and falling, so hover can arrive
-// at a different speed than it leaves.
 function approach(current, target, config) {
   const rate = target > current ? config.hoverInEase : config.hoverOutEase;
   return current + (target - current) * rate;
 }
 
-// 1 makes the entry front a circle on the card, 0 an ellipse in its own shape.
-// Folded into the aspect the shader already takes rather than sent as a second
-// uniform — the reveal only ever uses the two together.
 function entryAspect() {
   const aspect = config.cardWidth / config.cardHeight;
   return 1 + (aspect - 1) * config.entryRound;
@@ -53,8 +44,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   const camera = new THREE.PerspectiveCamera(config.fov, 1, 0.1, 100);
   camera.position.z = config.cameraZ;
 
-  // The scene pass works in linear light, the composite writes straight to the
-  // framebuffer in display space. Same colour, kept in both forms.
   const backgroundLinear = new THREE.Color(config.background);
   const backgroundSRGB = hexToSRGB(config.background);
   scene.background = backgroundLinear;
@@ -70,10 +59,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   const cards = [];
 
   function buildGeometry() {
-    // Width segments let the vertex shader wrap the card around the cylinder.
-    // Height segments are there purely for the horizontal bend — its falloff
-    // runs down the card, so with one segment uv.y is only ever 0 or 1 and the
-    // card shifts bodily instead of bowing.
     return new THREE.PlaneGeometry(config.cardWidth, config.cardHeight, 48, 24);
   }
 
@@ -114,33 +99,19 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
         uHover: { value: 0 },
         uDim: { value: 0 },
         uDimFade: { value: config.dimFade },
-        // Read by the visible pass and, through the shared uniform objects, by
-        // the card buffer — so the reveal, the hit test and the composite's
-        // entry channel all stop at the same edge.
         uEntry: { value: 1 },
         uEntryScale: { value: config.entryScale },
         uEntrySoftness: { value: config.entrySoftness },
         uEntryAspect: { value: entryAspect() },
       },
-      // Culling backfaces would drop every card past 90°, which is most of the
-      // ribbon at this angle step. The mirrored texture doesn't matter since
-      // backfaceFade and haze reduce them to pale ghosts anyway.
       side: THREE.DoubleSide,
-      // Alpha carries depth here, not coverage — blending would multiply it
-      // into the colour and wash out the near cards.
       blending: THREE.NoBlending,
     });
 
     const mesh = new THREE.Mesh(geometry, material);
-    // Kept unshaped; the curve is applied on the way to the shader.
     mesh.userData.hoverRaw = { hover: 0, dim: 0 };
-    // 1 is absent, 0 is arrived. Only ever falls, so a card can't un-arrive.
-    // Its place in the running order is stored rather than its delay, so the
-    // stagger slider still does something while the arrival is playing.
     mesh.userData.entry = 1;
     mesh.userData.entryOrder = index;
-    // Positions come entirely from the vertex shader, so the CPU-side bounding
-    // sphere is meaningless.
     mesh.frustumCulled = false;
     scene.add(mesh);
     cards.push(mesh);
@@ -157,8 +128,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
         textureSettled();
       },
       undefined,
-      // A card that failed to load still has to be counted, or one 404 holds
-      // the entry for the whole wait limit.
       textureSettled
     );
   });
@@ -174,21 +143,12 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     geometry = next;
   }
 
-  // Built after the cards so it can borrow their uniform objects.
   const cardBuffer = createCardBuffer(renderer, scene, cards, config);
   post.compositeMaterial.uniforms.uCardBuffer.value = cardBuffer.texture;
 
-  // --- entry ----------------------------------------------------------------
-  // Two halves of one arrival: a timed tween on the scroll for the spin, and a
-  // per-card front in the frame loop for the reveal. Both start together, held
-  // back until the last texture has settled — a card with no map renders black,
-  // so opening sooner spends the move on empty rectangles.
   let pending = IMAGES.length;
   let entryStart = null;
 
-  // Fisher-Yates. Reshuffled on every run: a fixed order is legible after two
-  // or three viewings and starts to read as a sequence being replayed rather
-  // than as the set landing.
   function shuffleEntryOrder() {
     const order = cards.map((_, index) => index);
     for (let i = order.length - 1; i > 0; i--) {
@@ -198,20 +158,12 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     cards.forEach((card, index) => (card.userData.entryOrder = order[index]));
   }
 
-  // Parks the helix where the arrival begins. Called before the first frame as
-  // well, so the wait for textures is spent at the start of the move rather
-  // than sitting at the resting position and jumping backwards to open.
   function parkForEntry() {
     scroll.state.current = -config.entrySpin;
     scroll.state.target = scroll.state.current;
     shuffleEntryOrder();
     for (const card of cards) {
       card.userData.entry = 1;
-      // Written straight through as well as onto the card. The buffer is drawn
-      // at the top of the frame and only picks up uniforms the loop below sets,
-      // so going through the loop alone would draw one frame of whole cards —
-      // and this runs on the frame the textures land, which is exactly when
-      // that frame would be visible.
       card.material.uniforms.uEntry.value = 1;
     }
   }
@@ -232,8 +184,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     beginEntry();
   }, ENTRY_WAIT_LIMIT);
 
-  // Counts down to the open. Guarded against the wait limit having fired first,
-  // which would otherwise restart the entry as the late textures trickled in.
   function textureSettled() {
     if (pending === 0 || --pending > 0) return;
     clearTimeout(entryWait);
@@ -245,18 +195,10 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   const pointer = { x: 0, y: 0, inside: false };
   let hovered = -1;
 
-  // Pointer travel, accumulated as events land and consumed once a frame.
-  // Measured event to event, not frame to frame — several pointermoves can
-  // arrive between two frames, and comparing only the newest against the last
-  // frame reads a fast flick as one short step.
   let travel = 0;
   let pointerSpeed = 0;
   let lastClient = null;
 
-  // Clicking a card sends it to the centre, which slides it out from under a
-  // stationary cursor. Picking re-runs every frame, so focus would jump to
-  // whatever card passes beneath instead of staying on the one being brought
-  // forward. Hold it until the pointer actually moves.
   let locked = -1;
   const lockOrigin = { x: 0, y: 0 };
 
@@ -267,7 +209,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   const onPointerMove = (event) => {
     const rect = canvas.getBoundingClientRect();
     pointer.x = (event.clientX - rect.left) / rect.width;
-    // Flipped: readRenderTargetPixels measures from the bottom.
     pointer.y = 1 - (event.clientY - rect.top) / rect.height;
     pointer.inside =
       pointer.x >= 0 && pointer.x <= 1 && pointer.y >= 0 && pointer.y <= 1;
@@ -283,8 +224,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     lastClient.x = event.clientX;
     lastClient.y = event.clientY;
 
-    // Measured from where the click happened rather than the last frame, so
-    // sub-pixel jitter can't release the lock on its own.
     if (locked >= 0) {
       const travelled = Math.hypot(
         event.clientX - lockOrigin.x,
@@ -293,19 +232,14 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
       if (travelled > config.clickSlop) releaseLock();
     }
   };
+  
   const onPointerLeave = () => {
     pointer.inside = false;
   };
 
-  // Bring a card to the focus band.
   function focusCard(index) {
     const count = cards.length;
-    // A card is centred when its slot equals half the count, and slot is
-    // mod(index - progress, count), so progress has to be index minus half.
     const base = index - count / 2;
-    // Which is true of infinitely many values a loop apart. Take the nearest to
-    // where we already are, otherwise clicking a card just above the top of the
-    // frame can unwind the whole helix to reach it the long way round.
     const nearest =
       base + Math.round((scroll.state.current - base) / count) * count;
     scroll.goTo(nearest);
@@ -316,17 +250,12 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   const onPointerDown = (event) => {
     press.x = event.clientX;
     press.y = event.clientY;
-    // A press is a decision, so stop holding hover back. Otherwise a click at
-    // the end of a fast move acts on whatever card the settle test was still
-    // holding rather than the one actually under the cursor.
     pointerSpeed = 0;
     travel = 0;
   };
 
   const onPointerUp = (event) => {
     if (!config.clickToFocus || hovered < 0) return;
-    // A drag that happens to end over a card isn't a click on it, so only count
-    // it if the pointer barely moved.
     const travelled = Math.hypot(event.clientX - press.x, event.clientY - press.y);
     if (travelled > config.clickSlop) return;
 
@@ -340,8 +269,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
   canvas.addEventListener("pointerleave", onPointerLeave);
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointerup", onPointerUp);
-  // Scrolling is as much a decision to move on as moving the cursor, and
-  // holding focus on a card you're scrolling away from just reads as stuck.
   canvas.addEventListener("wheel", releaseLock, { passive: true });
 
   function resize() {
@@ -358,7 +285,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
 
   const gui = createGui(config, {
     onGeometryChange: rebuildGeometry,
-    // An arrival can't be tuned if it only plays once per reload.
     onEntryReplay: beginEntry,
     onCameraChange() {
       camera.fov = config.fov;
@@ -369,8 +295,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
       backgroundLinear.set(config.background);
       backgroundSRGB.copy(hexToSRGB(config.background));
     },
-    // Hex parsing is cheap but pointless every frame, so palettes get pushed on
-    // change rather than alongside the sliders in tick.
     onPaletteChange() {
       const u = post.compositeMaterial.uniforms;
       u.uInk.value.copy(hexToSRGB(config.ditherInk));
@@ -389,7 +313,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     },
   });
 
-  // Panel starts hidden and lil-gui binds no keys of its own, so `g` toggles.
   const onKeyDown = (event) => {
     if (event.key === "g" && !event.metaKey && !event.ctrlKey) {
       gui.show(gui._hidden);
@@ -406,8 +329,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     config.autoSpin && (scroll.state.target += config.autoSpin);
     const progress = scroll.update();
 
-    // Centred index is progress plus half a turn, rounded. Only reported on
-    // change so we're not touching the DOM every frame.
     const total = cards.length;
     const centred = (((Math.round(progress + total / 2) % total) + total) % total);
     if (centred !== activeIndex) {
@@ -415,27 +336,13 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
       onActiveChange?.(activeIndex);
     }
 
-    // Client pixels per frame, smoothed so one stray event can't flip the
-    // state. Client pixels rather than uv, so it means the same thing at any
-    // window size.
     pointerSpeed += (travel - pointerSpeed) * 0.35;
     travel = 0;
 
-    // Hover intent. A sweep drags the cursor over card after card and each one
-    // starts resolving before being abandoned a frame later, which makes the
-    // whole rack focus blink. So hover only changes hands once the pointer has
-    // slowed to the speed of aiming. Above that it holds what it had rather
-    // than dropping to nothing — releasing mid-sweep would un-resolve the card
-    // you just left, which is the same flicker seen from the other side.
     const settled =
       !config.hoverIntent || pointerSpeed <= config.hoverSettleSpeed;
 
-    // Re-picked every frame rather than only on pointermove, because the helix
-    // keeps turning under a stationary cursor and the card beneath it changes.
-    // The buffer must be drawn before it can be read.
     cardBuffer.render(camera);
-    // Skipped entirely while locked — it's a synchronous GPU readback and the
-    // answer gets discarded anyway.
     const picked =
       locked < 0 && pointer.inside ? cardBuffer.pick(pointer.x, pointer.y) : -1;
     hovered = locked >= 0 ? locked : settled ? picked : hovered;
@@ -444,19 +351,12 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     const anyHovered = hovered >= 0;
     const count = cards.length;
 
-    // Entry clock, in ms since the arrival opened. A null start means the
-    // textures aren't in yet, so cards stay away rather than arriving black;
-    // the master switch brings all of them in on the spot instead. Both ends
-    // are infinities so the per-card arithmetic below needs no special case.
     const entryElapsed = !config.entry
       ? Infinity
       : entryStart === null
         ? -Infinity
         : performance.now() - entryStart;
 
-    // Slot, not index, and deliberately not wrapped. The first and last slots
-    // are neighbours in the loop but sit at opposite ends of the frame, so
-    // wrapping the distance would call them adjacent.
     const slotOf = (i) => {
       const slot = (i - progress) % count;
       return slot < 0 ? slot + count : slot;
@@ -468,11 +368,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
       const isHovered = index === hovered;
       const raw = card.userData.hoverRaw;
 
-      // Dim falls off with distance along the helix rather than switching on
-      // for every other card at once, so neighbours stay partly legible and
-      // only distant cards dissolve. That reads as focus instead of an overlay.
-      // The hovered card sits at distance 0, so it lands on zero dim with no
-      // special case needed.
       const slot = slotOf(index);
       const separation = anyHovered ? Math.abs(slot - hoveredSlot) : 0;
       const dimTarget = anyHovered
@@ -482,11 +377,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
       raw.hover = approach(raw.hover, isHovered ? 1 : 0, config);
       raw.dim = approach(raw.dim, dimTarget, config);
 
-      // Entry. Each card waits out its place in the running order, then opens
-      // over its own duration. Held to falling only, so dragging a slider
-      // mid-arrival can only ever bring cards in — recomputing freely would
-      // send ones already on screen back out, which reads as a glitch rather
-      // than as the retune it is.
       const local = Math.min(
         1,
         Math.max(
@@ -500,8 +390,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
         1 - smoothstep(0, 1, Math.pow(local, config.entryCurve))
       );
 
-      // Shaped on the way into the shader, so the eased state stays linear and
-      // the curve can be changed live without jumping.
       u.uHover.value = Math.pow(raw.hover, config.hoverCurve);
       u.uDim.value = Math.pow(raw.dim, config.hoverCurve);
       u.uDimFade.value = config.dimFade;
@@ -576,9 +464,21 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
     c.uLift.value = config.lift;
     c.uDepthBlur.value = config.depthBlur;
 
-    // Stepped before the composite reads it, so the stroke painted this frame
-    // is the one on screen rather than one frame stale.
     c.uTrail.value = trail.update();
+
+    // Export card screen positions for labels overlay
+    const cardPositions = cards.map((card, index) => {
+      const worldPos = new THREE.Vector3();
+      card.getWorldPosition(worldPos);
+      const screenPos = worldPos.project(camera);
+      return {
+        index,
+        x: (screenPos.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-(screenPos.y) * 0.5 + 0.5) * window.innerHeight,
+        visible: screenPos.z < 1 && screenPos.z > 0
+      };
+    });
+    window.__cardPositions = cardPositions;
 
     post.render(scene, camera);
   }
