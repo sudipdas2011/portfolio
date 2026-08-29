@@ -60,7 +60,6 @@ const Carousel = () => {
         }} 
       />
       
-      {/* Menu at Bottom Right */}
       <div 
         style={{
           position: 'absolute',
@@ -130,6 +129,4 @@ const Carousel = () => {
   );
 };
 
-export default Carousel;
-
-// 
+export default Carousel; 

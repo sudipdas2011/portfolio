@@ -35,15 +35,6 @@ const clamp = (value, min, max) =>
     max
   );
 
-/* ================================================================
-   SUBPAGE TYPOGRAPHY
-
-   Waits 1.6 seconds after becoming active,
-   then starts TextRise.
-
-   Both title and number are scaled 2.5×.
-================================================================ */
-
 function SubPageTypography({
   page,
   isActive,
@@ -52,19 +43,13 @@ function SubPageTypography({
     useState(false);
 
   useEffect(() => {
-    /*
-     * Reset whenever this page becomes inactive.
-     */
+ 
     if (!isActive) {
       setShouldAnimate(false);
 
       return undefined;
     }
 
-    /*
-     * Wait exactly 1.6 seconds after
-     * the subpage becomes active.
-     */
     const timer =
       window.setTimeout(() => {
         setShouldAnimate(true);
@@ -77,9 +62,7 @@ function SubPageTypography({
 
   return (
     <>
-      {/* ==========================================================
-          SUBPAGE NAME
-      ========================================================== */}
+
 
       <div
         style={{
@@ -128,12 +111,6 @@ function SubPageTypography({
           )}
         </AnimatePresence>
       </div>
-
-      {/* ==========================================================
-          NUMBER
-
-          Same typography size and 2.5× scale.
-      ========================================================== */}
 
       <div
         style={{
@@ -186,27 +163,13 @@ function SubPageTypography({
   );
 }
 
-/* ================================================================
-   WHAT I DO
-================================================================ */
-
 export default function WhatIDo() {
   const sectionRef =
     useRef(null);
 
-  /*
-   * Current subpage.
-   *
-   * 0 = 01
-   * 1 = 02
-   * 2 = 03
-   */
   const pageRef =
     useRef(0);
 
-  /*
-   * Mouse X is used for arrow click detection.
-   */
   const mouseXRef =
     useRef(
       typeof window !== "undefined"
@@ -214,56 +177,32 @@ export default function WhatIDo() {
         : 0
     );
 
-  /*
-   * Prevents multiple page changes
-   * from one physical wheel gesture.
-   */
   const wheelLockedRef =
     useRef(false);
-
-  /*
-   * Accumulates wheel movement.
-   */
   const scrollAccumulatorRef =
     useRef(0);
-
-  /*
-   * Detects when trackpad momentum
-   * has finished.
-   */
   const releaseTimerRef =
     useRef(null);
-
   const [
     isActive,
     setIsActive,
   ] = useState(false);
-
   const [
     introDone,
     setIntroDone,
   ] = useState(false);
-
   const [
     activeIndex,
     setActiveIndex,
   ] = useState(0);
-
   const [
     leftArrowVisible,
     setLeftArrowVisible,
   ] = useState(false);
-
   const [
     rightArrowVisible,
     setRightArrowVisible,
   ] = useState(false);
-
-  /* ==============================================================
-     SECTION VISIBILITY
-
-     Intro begins when WhatIDo reaches 85%.
-  ============================================================== */
 
   useEffect(() => {
     const section =
@@ -301,10 +240,6 @@ export default function WhatIDo() {
     };
   }, []);
 
-  /* ==============================================================
-     INTRO TIMING
-  ============================================================== */
-
   useEffect(() => {
     if (!isActive) {
       setIntroDone(false);
@@ -321,10 +256,6 @@ export default function WhatIDo() {
       window.clearTimeout(timer);
     };
   }, [isActive]);
-
-  /* ==============================================================
-     MOUSE TRACKING
-  ============================================================== */
 
   useEffect(() => {
     const handleMouseMove =
@@ -346,10 +277,6 @@ export default function WhatIDo() {
     };
   }, []);
 
-  /* ==============================================================
-     PAGE NAVIGATION
-  ============================================================== */
-
   const goToPage =
     useCallback(
       (index) => {
@@ -370,25 +297,6 @@ export default function WhatIDo() {
       []
     );
 
-  /* ==============================================================
-     WHEEL NAVIGATION
-
-     Slow and deliberate.
-
-     Small wheel movement:
-       → accumulate
-
-     Enough movement:
-       → change exactly one page
-
-     Trackpad momentum:
-       → locked
-
-     This prevents:
-
-       02 → 03 → 02 → 03
-  ============================================================== */
-
   useEffect(() => {
     const section =
       sectionRef.current;
@@ -397,12 +305,6 @@ export default function WhatIDo() {
       return undefined;
     }
 
-    /*
-     * Higher = more scrolling required.
-     *
-     * 140 gives a noticeably slower
-     * and more deliberate feel.
-     */
     const SCROLL_THRESHOLD =
       140;
 
@@ -418,9 +320,6 @@ export default function WhatIDo() {
         const delta =
           event.deltaY;
 
-        /*
-         * Ignore tiny trackpad noise.
-         */
         if (
           Math.abs(delta) < 1
         ) {
@@ -439,12 +338,6 @@ export default function WhatIDo() {
         const atLastPage =
           currentPage ===
           SUB_PAGES.length - 1;
-
-        /* --------------------------------------------------------
-           FIRST PAGE + UP
-
-           Release wheel to the normal page.
-        -------------------------------------------------------- */
 
         if (
           atFirstPage &&
@@ -467,12 +360,6 @@ export default function WhatIDo() {
           return;
         }
 
-        /* --------------------------------------------------------
-           LAST PAGE + DOWN
-
-           Release wheel to the normal page.
-        -------------------------------------------------------- */
-
         if (
           atLastPage &&
           direction > 0
@@ -494,22 +381,12 @@ export default function WhatIDo() {
           return;
         }
 
-        /*
-         * We are inside the subpage sequence.
-         */
         event.preventDefault();
-
-        /* --------------------------------------------------------
-           GESTURE LOCK
-        -------------------------------------------------------- */
 
         if (
           wheelLockedRef.current
         ) {
-          /*
-           * Trackpad is still generating
-           * momentum events.
-           */
+
           if (
             releaseTimerRef.current
           ) {
@@ -533,17 +410,11 @@ export default function WhatIDo() {
           return;
         }
 
-        /* --------------------------------------------------------
-           ACCUMULATE SCROLL
-        -------------------------------------------------------- */
 
         const previous =
           scrollAccumulatorRef.current;
 
-        /*
-         * If direction reverses,
-         * start fresh.
-         */
+
         if (
           previous !== 0 &&
           Math.sign(previous) !==
@@ -556,9 +427,7 @@ export default function WhatIDo() {
             delta;
         }
 
-        /*
-         * Detect end of small scroll movement.
-         */
+   
         if (
           releaseTimerRef.current
         ) {
@@ -576,9 +445,6 @@ export default function WhatIDo() {
             180
           );
 
-        /*
-         * Not enough scrolling yet.
-         */
         if (
           Math.abs(
             scrollAccumulatorRef.current
@@ -588,9 +454,6 @@ export default function WhatIDo() {
           return;
         }
 
-        /* --------------------------------------------------------
-           ONE PAGE ONLY
-        -------------------------------------------------------- */
 
         wheelLockedRef.current =
           true;
@@ -615,9 +478,6 @@ export default function WhatIDo() {
           );
         }
 
-        /* --------------------------------------------------------
-           WAIT FOR TRACKPAD MOMENTUM
-        -------------------------------------------------------- */
 
         if (
           releaseTimerRef.current
@@ -674,10 +534,6 @@ export default function WhatIDo() {
     goToPage,
   ]);
 
-  /* ==============================================================
-     KEYBOARD NAVIGATION
-  ============================================================== */
-
   useEffect(() => {
     const handleKeyDown =
       (event) => {
@@ -706,10 +562,6 @@ export default function WhatIDo() {
         const currentPage =
           pageRef.current;
 
-        /*
-         * At boundaries allow normal
-         * page behavior.
-         */
         if (
           currentPage === 0 &&
           direction < 0
@@ -750,10 +602,6 @@ export default function WhatIDo() {
     goToPage,
   ]);
 
-  /* ==============================================================
-     ARROW VISIBILITY
-  ============================================================== */
-
   const handleLeftArrowChange =
     useCallback(
       (active) => {
@@ -774,10 +622,6 @@ export default function WhatIDo() {
       []
     );
 
-  /* ==============================================================
-     ARROW CLICK
-  ============================================================== */
-
   useEffect(() => {
     const handleClick =
       () => {
@@ -797,9 +641,6 @@ export default function WhatIDo() {
         const currentPage =
           pageRef.current;
 
-        /*
-         * LEFT 25%
-         */
         if (
           x < width * 0.25 &&
           leftArrowVisible &&
@@ -812,9 +653,6 @@ export default function WhatIDo() {
           return;
         }
 
-        /*
-         * RIGHT 25%
-         */
         if (
           x > width * 0.75 &&
           rightArrowVisible &&
@@ -846,10 +684,6 @@ export default function WhatIDo() {
     goToPage,
   ]);
 
-  /* ==============================================================
-     TRACK POSITION
-  ============================================================== */
-
   const horizontalX =
     -activeIndex * 100;
 
@@ -859,10 +693,6 @@ export default function WhatIDo() {
   const rightHasPage =
     activeIndex <
     SUB_PAGES.length - 1;
-
-  /* ==============================================================
-     RENDER
-  ============================================================== */
 
   return (
     <section
@@ -884,10 +714,8 @@ export default function WhatIDo() {
 
         isolation: "isolate",
       }}
+
     >
-      {/* ==========================================================
-          LEFT ARROW
-      ========================================================== */}
 
       {leftHasPage && (
         <Arrow
@@ -902,10 +730,6 @@ export default function WhatIDo() {
         />
       )}
 
-      {/* ==========================================================
-          RIGHT ARROW
-      ========================================================== */}
-
       {rightHasPage && (
         <Arrow
           range="right"
@@ -918,12 +742,6 @@ export default function WhatIDo() {
           }
         />
       )}
-
-      {/* ==========================================================
-          WHAT I DO ?
-
-          Starts when section reaches 85%.
-      ========================================================== */}
 
       <AnimatePresence>
         {isActive &&
@@ -989,10 +807,6 @@ export default function WhatIDo() {
           )}
       </AnimatePresence>
 
-      {/* ==========================================================
-          MAIN STAGE
-      ========================================================== */}
-
       <motion.div
         initial={{
           opacity: 0,
@@ -1034,11 +848,8 @@ export default function WhatIDo() {
               ? "auto"
               : "none",
         }}
-      >
-        {/* ========================================================
-            3D MODEL
-        ======================================================== */}
-
+        >
+          
         <div
           style={{
             position: "absolute",
@@ -1070,10 +881,6 @@ export default function WhatIDo() {
             }
           />
         </div>
-
-        {/* ========================================================
-            SUBPAGE TRACK
-        ======================================================== */}
 
         <div
           style={{
@@ -1150,10 +957,6 @@ export default function WhatIDo() {
             )}
           </motion.div>
         </div>
-
-        {/* ========================================================
-            BOTTOM SCROLL INDICATOR
-        ======================================================== */}
 
         <div
           style={{

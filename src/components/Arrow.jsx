@@ -21,7 +21,6 @@ export default function Arrow({
   });
 
   const activeRef = useRef(false);
-
   const arrowRef = useRef(null);
   const canvasRef = useRef(null);
   const points = useRef([]);
@@ -29,13 +28,7 @@ export default function Arrow({
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-
     let frame;
-
-    /* ----------------------------------------------------------
-       RESIZE
-    ---------------------------------------------------------- */
-
     const resize = () => {
       if (!canvas) return;
 
@@ -43,14 +36,9 @@ export default function Arrow({
       canvas.height = window.innerHeight;
     };
 
-    /* ----------------------------------------------------------
-       MOUSE
-    ---------------------------------------------------------- */
-
     const move = (event) => {
       mouse.current.x = event.clientX;
       mouse.current.y = event.clientY;
-
       if (
         trail &&
         event.clientY >
@@ -67,18 +55,6 @@ export default function Arrow({
       }
     };
 
-    /* ----------------------------------------------------------
-       TARGET
-       
-       The important part:
-       
-       LEFT  → left edge, vertical CENTER
-       RIGHT → right edge, vertical CENTER
-       
-       Never bottom.
-       Never top.
-    ---------------------------------------------------------- */
-
     const getTarget = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
@@ -89,31 +65,24 @@ export default function Arrow({
           y: height / 2,
         };
       }
-
       if (range === "right") {
         return {
           x: width,
           y: height / 2,
         };
       }
-
       if (range === "top") {
         return {
           x: width / 2,
           y: 0,
         };
       }
-
       if (range === "bottom") {
         return {
           x: width / 2,
           y: height,
         };
       }
-
-      /*
-       * Fallback to explicit lookAt if supplied.
-       */
 
       let x = width / 2;
       let y = height / 2;
@@ -143,10 +112,6 @@ export default function Arrow({
       return { x, y };
     };
 
-    /* ----------------------------------------------------------
-       SECTION CHECK
-    ---------------------------------------------------------- */
-
     const isInsideAllowedSection = (
       x,
       y
@@ -168,10 +133,6 @@ export default function Arrow({
       );
     };
 
-    /* ----------------------------------------------------------
-       RANGE CHECK
-    ---------------------------------------------------------- */
-
     const isInsideRange = (
       x,
       y
@@ -182,25 +143,17 @@ export default function Arrow({
       if (range === "left") {
         return x < width * 0.25;
       }
-
       if (range === "right") {
         return x > width * 0.75;
       }
-
       if (range === "top") {
         return y < height * 0.25;
       }
-
       if (range === "bottom") {
         return y > height * 0.75;
       }
-
       return false;
     };
-
-    /* ----------------------------------------------------------
-       ANGLE NORMALIZATION
-    ---------------------------------------------------------- */
 
     const normalizeAngle = (
       angle
@@ -208,17 +161,11 @@ export default function Arrow({
       while (angle > 180) {
         angle -= 360;
       }
-
       while (angle < -180) {
         angle += 360;
       }
-
       return angle;
     };
-
-    /* ----------------------------------------------------------
-       UPDATE LOOP
-    ---------------------------------------------------------- */
 
     const update = () => {
       const width = window.innerWidth;
@@ -246,23 +193,14 @@ export default function Arrow({
         allowed &&
         insideRange;
 
-      /* --------------------------------------------------------
-         ACTIVE STATE
-      -------------------------------------------------------- */
-
       if (
         active !==
         activeRef.current
       ) {
         activeRef.current =
           active;
-
         onChange?.(active);
       }
-
-      /* --------------------------------------------------------
-         CURSOR MASK
-      -------------------------------------------------------- */
 
       const root =
         document.documentElement;
@@ -287,10 +225,6 @@ export default function Arrow({
           "1"
         );
       }
-
-      /* --------------------------------------------------------
-         TRAIL
-      -------------------------------------------------------- */
 
       if (ctx && canvas) {
         ctx.clearRect(
@@ -331,10 +265,6 @@ export default function Arrow({
         }
       }
 
-      /* --------------------------------------------------------
-         ARROW
-      -------------------------------------------------------- */
-
       const element =
         arrowRef.current;
 
@@ -343,15 +273,11 @@ export default function Arrow({
           requestAnimationFrame(
             update
           );
-
         return;
       }
 
       if (active) {
-        /*
-         * Smoothly move arrow to cursor.
-         */
-
+        
         arrow.current.x +=
           (mouseX -
             arrow.current.x) *
@@ -361,18 +287,6 @@ export default function Arrow({
           (mouseY -
             arrow.current.y) *
           smooth;
-
-        /*
-         * ----------------------------------------------------
-         * CRITICAL FIX
-         *
-         * Calculate the direction from the ARROW'S CURRENT
-         * POSITION to the EDGE MIDPOINT.
-         *
-         * This means the arrow actually looks at the point
-         * instead of calculating from the raw cursor.
-         * ----------------------------------------------------
-         */
 
         const target =
           getTarget();
@@ -402,11 +316,6 @@ export default function Arrow({
           difference *
           smooth;
 
-        /*
-         * Apply position FIRST,
-         * rotation SECOND.
-         */
-
         element.style.transform =
           `translate3d(` +
           `${arrow.current.x}px, ` +
@@ -425,9 +334,6 @@ export default function Arrow({
           targetY: target.y,
         });
       } else {
-        /*
-         * Keep the arrow attached to the cursor while hidden.
-         */
 
         arrow.current.x =
           mouseX;

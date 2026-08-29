@@ -24,11 +24,6 @@ import * as THREE from "three";
 
 import headModelPath from "../assets/headModel.glb";
 
-
-// ============================================================
-// 3D MODEL
-// ============================================================
-
 function Model({ modelRef }) {
   const { scene } = useGLTF(headModelPath);
   const { mouse } = useThree();
@@ -49,11 +44,6 @@ function Model({ modelRef }) {
     progress: 0,
   });
 
-
-  // ----------------------------------------------------------
-  // ORIGINAL SHADER
-  // ----------------------------------------------------------
-
   const glowingWireframeShader = useMemo(() => {
     return new THREE.ShaderMaterial({
       wireframe: true,
@@ -61,386 +51,108 @@ function Model({ modelRef }) {
       depthWrite: true,
 
       uniforms: {
-        uTime: {
-          value: 0,
-        },
-
-        uMouse: {
-          value: new THREE.Vector2(0, 0),
-        },
-
-        uVelocity: {
-          value: 0,
-        },
-
-        uColorFar: {
-          value: new THREE.Color(
-            "#020916"
-          ),
-        },
-
-        uColorMidFar: {
-          value: new THREE.Color(
-            "#0033aa"
-          ),
-        },
-
-        uColorMidNear: {
-          value: new THREE.Color(
-            "#00ffbb"
-          ),
-        },
-
-        uColorNear: {
-          value: new THREE.Color(
-            "#ccff00"
-          ),
-        },
-
-        uShadowDarkness: {
-          value: 0.05,
-        },
-
-        uShadowSpread: {
-          value: 0.4,
-        },
+        uTime: { value: 0, },
+        uMouse: { value: new THREE.Vector2(0, 0), },
+        uVelocity: { value: 0, },
+        uColorFar: { value: new THREE.Color( "#020916" ), },
+        uColorMidFar: { value: new THREE.Color( "#0033aa" ), },
+        uColorMidNear: { value: new THREE.Color( "#00ffbb" ), },
+        uColorNear: { value: new THREE.Color( "#ccff00" ), },
+        uShadowDarkness: { value: 0.05, },
+        uShadowSpread: { value: 0.4, },
       },
-
 
       vertexShader: `
         uniform float uTime;
         uniform vec2 uMouse;
         uniform float uVelocity;
-
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
 
         void main() {
-
-          vLocalNormal =
-            normalize(normal);
-
-          vLocalPosition =
-            position;
-
-          vec4 mvPosition =
-            modelViewMatrix *
-            vec4(position, 1.0);
-
-          vec4 clipPosition =
-            projectionMatrix *
-            mvPosition;
-
-          vec2 ndc =
-            clipPosition.xy /
-            clipPosition.w;
-
-          float mouseDist =
-            distance(
-              ndc,
-              uMouse
-            );
-
-          float rippleForce =
-            smoothstep(
-              0.5,
-              0.0,
-              mouseDist
-            );
-
-          float wave =
-            sin(
-              mouseDist * 25.0 -
-              uTime * 8.0
-            )
-            *
-            rippleForce
-            *
-            0.015
-            *
-            uVelocity;
-
-          vec3 displacedPosition =
-            position +
-            normal * wave;
-
-          vec4 displacedMvPosition =
-            modelViewMatrix *
-            vec4(
-              displacedPosition,
-              1.0
-            );
-
-          vViewPosition =
-            displacedMvPosition;
-
-          gl_Position =
-            projectionMatrix *
-            displacedMvPosition;
+          vLocalNormal = normalize(normal);
+          vLocalPosition = position;
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          vec4 clipPosition = projectionMatrix * mvPosition;
+          vec2 ndc = clipPosition.xy / clipPosition.w;
+          float mouseDist = distance( ndc, uMouse );
+          float rippleForce = smoothstep( 0.5, 0.0, mouseDist );
+          float wave = sin( mouseDist * 25.0 - uTime * 8.0 )  *  rippleForce  *  0.015  *  uVelocity;
+          vec3 displacedPosition = position + normal * wave;
+          vec4 displacedMvPosition = modelViewMatrix * vec4( displacedPosition, 1.0 );
+          vViewPosition = displacedMvPosition;
+          gl_Position = projectionMatrix * displacedMvPosition;
         }
       `,
 
-
       fragmentShader: `
         uniform float uTime;
-
         uniform vec3 uColorFar;
         uniform vec3 uColorMidFar;
         uniform vec3 uColorMidNear;
         uniform vec3 uColorNear;
-
         uniform float uShadowDarkness;
         uniform float uShadowSpread;
-
         varying vec3 vLocalPosition;
         varying vec3 vLocalNormal;
         varying vec4 vViewPosition;
-
-
         float hash(vec3 p) {
-
-          p = fract(
-            p *
-            vec3(
-              443.8975,
-              397.2973,
-              491.1871
-            )
-          );
-
-          p += dot(
-            p.xyz,
-            p.yzx + 19.19
-          );
-
-          return fract(
-            p.x *
-            p.y *
-            p.z
-          );
+          p = fract( p * vec3( 443.8975, 397.2973, 491.1871 ) );
+          p += dot( p.xyz, p.yzx + 19.19 );
+          return fract( p.x * p.y * p.z );
         }
-
-
         float noise(vec3 p) {
-
-          vec3 i =
-            floor(p);
-
-          vec3 f =
-            fract(p);
-
-          f =
-            f *
-            f *
-            (3.0 - 2.0 * f);
-
+          vec3 i = floor(p);
+          vec3 f = fract(p);
+          f = f * f * (3.0 - 2.0 * f);
           return mix(
-
             mix(
-
-              mix(
-                hash(
-                  i +
-                  vec3(0,0,0)
-                ),
-
-                hash(
-                  i +
-                  vec3(1,0,0)
-                ),
-
-                f.x
-              ),
-
-              mix(
-                hash(
-                  i +
-                  vec3(0,1,0)
-                ),
-
-                hash(
-                  i +
-                  vec3(1,1,0)
-                ),
-
-                f.x
-              ),
-
+              mix( hash( i + vec3(0,0,0) ), hash( i + vec3(1,0,0) ), f.x ),
+              mix( hash( i + vec3(0,1,0) ), hash( i + vec3(1,1,0) ), f.x ),
               f.y
             ),
-
             mix(
-
-              mix(
-                hash(
-                  i +
-                  vec3(0,0,1)
-                ),
-
-                hash(
-                  i +
-                  vec3(1,0,1)
-                ),
-
-                f.x
-              ),
-
-              mix(
-                hash(
-                  i +
-                  vec3(0,1,1)
-                ),
-
-                hash(
-                  i +
-                  vec3(1,1,1)
-                ),
-
-                f.x
-              ),
-
+              mix( hash( i + vec3(0,0,1) ), hash( i + vec3(1,0,1) ), f.x ),
+              mix( hash( i + vec3(0,1,1) ), hash( i + vec3(1,1,1) ), f.x ),
               f.y
             ),
-
             f.z
           );
         }
 
 
         void main() {
-
-          float viewDepth =
-            -vViewPosition.z;
-
-          float normalizedDepth =
-            (viewDepth - 3.2) /
-            1.5;
-
-          float depthMap =
-            1.0 -
-            clamp(
-              normalizedDepth,
-              0.0,
-              1.0
-            );
-
-
-          vec3 noiseCoord =
-            vLocalPosition *
-            4.0
-            +
-            vec3(
-              0.0,
-              uTime * 1.0,
-              uTime * 0.4
-            );
-
-
-          float liquidNoise =
-            noise(noiseCoord) *
-            0.12;
-
-
-          float finalDepth =
-            clamp(
-              depthMap +
-              liquidNoise,
-              0.0,
-              1.0
-            );
-
-
+          float viewDepth = -vViewPosition.z;
+          float normalizedDepth = (viewDepth - 3.2) / 1.5;
+          float depthMap = 1.0 - clamp( normalizedDepth, 0.0, 1.0 );
+          vec3 noiseCoord = vLocalPosition * 4.0 + vec3( 0.0, uTime * 1.0, uTime * 0.4 );
+          float liquidNoise = noise(noiseCoord) * 0.12;
+          float finalDepth = clamp( depthMap + liquidNoise, 0.0, 1.0 );
           vec3 baseGradient;
-
 
           if (
             finalDepth < 0.33
           ) {
-
-            baseGradient =
-              mix(
-                uColorFar,
-                uColorMidFar,
-
-                smoothstep(
-                  0.0,
-                  0.33,
-                  finalDepth
-                )
-              );
-
+            baseGradient = mix( uColorFar, uColorMidFar, smoothstep( 0.0, 0.33, finalDepth ) );
           }
 
           else if (
             finalDepth < 0.66
           ) {
-
-            baseGradient =
-              mix(
-                uColorMidFar,
-                uColorMidNear,
-
-                smoothstep(
-                  0.33,
-                  0.66,
-                  finalDepth
-                )
-              );
-
+            baseGradient = mix( uColorMidFar, uColorMidNear, smoothstep( 0.33, 0.66, finalDepth ) );
           }
 
           else {
-
-            baseGradient =
-              mix(
-                uColorMidNear,
-                uColorNear,
-
-                smoothstep(
-                  0.66,
-                  1.0,
-                  finalDepth
-                )
-              );
+            baseGradient = mix( uColorMidNear, uColorNear, smoothstep( 0.66, 1.0, finalDepth ) );
           }
 
+          vec3 localCenterOffset = normalize( vLocalPosition );
+          float cavityFactor = dot( vLocalNormal, localCenterOffset );
+          float shadowMask = smoothstep( -0.2, uShadowSpread, cavityFactor );
+          float jointShadow = mix( uShadowDarkness, 1.0, shadowMask );
 
-          vec3 localCenterOffset =
-            normalize(
-              vLocalPosition
-            );
-
-
-          float cavityFactor =
-            dot(
-              vLocalNormal,
-              localCenterOffset
-            );
-
-
-          float shadowMask =
-            smoothstep(
-              -0.2,
-              uShadowSpread,
-              cavityFactor
-            );
-
-
-          float jointShadow =
-            mix(
-              uShadowDarkness,
-              1.0,
-              shadowMask
-            );
-
-
-          gl_FragColor =
-            vec4(
-              baseGradient *
-              jointShadow,
-              1.0
-            );
+          gl_FragColor = vec4( baseGradient * jointShadow, 1.0 );
         }
       `,
 
@@ -448,14 +160,11 @@ function Model({ modelRef }) {
     });
   }, []);
 
-
   useMemo(() => {
 
     scene.traverse(
       (child) => {
-
         if (child.isMesh) {
-
           child.material =
             glowingWireframeShader;
         }
@@ -467,23 +176,15 @@ function Model({ modelRef }) {
     glowingWireframeShader,
   ]);
 
-
-  // ----------------------------------------------------------
-  // MODEL ANIMATION
-  // ----------------------------------------------------------
-
   useFrame((state) => {
-
     if (!modelRef.current)
       return;
-
 
     glowingWireframeShader
       .uniforms
       .uTime
       .value =
       state.clock.getElapsedTime();
-
 
     glowingWireframeShader
       .uniforms
@@ -494,36 +195,24 @@ function Model({ modelRef }) {
         mouse.y
       );
 
-
-    const distanceMoved =
-      mouse.distanceTo(
-        prevMouse.current
-      );
-
-
+    const distanceMoved = mouse.distanceTo( prevMouse.current );
     const targetVelocity =
       Math.min(
         distanceMoved * 25.0,
         1.0
       );
-
-
     currentVelocity.current +=
       (
         targetVelocity -
         currentVelocity.current
       ) * 0.1;
-
-
     glowingWireframeShader
       .uniforms
       .uVelocity
       .value =
       currentVelocity.current;
 
-
     prevMouse.current.copy(mouse);
-
 
     entryState.current.currentY +=
       (
@@ -531,26 +220,21 @@ function Model({ modelRef }) {
         entryState.current.currentY
       ) * 0.05;
 
-
     entryState.current.currentAngleOffset +=
       (
         entryState.current.targetAngleOffset -
         entryState.current.currentAngleOffset
       ) * 0.05;
 
-
     modelRef.current.position.y =
       entryState.current.currentY;
-
 
     const mouseXRotation =
       -mouse.y * 0.4;
 
-
     const mouseYRotation =
       mouse.x * 0.4 +
       entryState.current.currentAngleOffset;
-
 
     modelRef.current.rotation.x +=
       (
@@ -558,59 +242,29 @@ function Model({ modelRef }) {
         modelRef.current.rotation.x
       ) * 0.08;
 
-
     modelRef.current.rotation.y +=
       (
         mouseYRotation -
         modelRef.current.rotation.y
       ) * 0.08;
-
   });
-
 
   return (
     <group
       ref={modelRef}
-
-      position={[
-        0,
-        -4,
-        0,
-      ]}
-
+      position={[ 0, -4, 0, ]}
       scale={2.2}
-
-      rotation={[
-        0,
-        -Math.PI,
-        0,
-      ]}
+      rotation={[ 0, -Math.PI, 0, ]}
     >
-
-      <primitive
-        object={scene}
-      />
-
+      <primitive object={scene} />
     </group>
   );
 }
-
-
-// ============================================================
-// INDIVIDUAL TYPOGRAPHY
-// ============================================================
 
 function TextLayer({ modelRef }) {
 
   const { camera, size } =
     useThree();
-
-
-  // ----------------------------------------------------------
-  // WORD LISTS
-  //
-  // Every word is now an independent Text object.
-  // ----------------------------------------------------------
 
   const leftWords = useMemo(
     () => [
@@ -623,7 +277,6 @@ function TextLayer({ modelRef }) {
         offsetX: 0.00,
         offsetY: 0.00,
       },
-
       {
         text: "Aesthete",
         size: 0.34,
@@ -632,7 +285,6 @@ function TextLayer({ modelRef }) {
         offsetX: 0.10,
         offsetY: -0.03,
       },
-
       {
         text: "Visionary",
         size: 0.46,
@@ -641,7 +293,6 @@ function TextLayer({ modelRef }) {
         offsetX: -0.04,
         offsetY: 0.01,
       },
-
       {
         text: "Artisan",
         size: 0.31,
@@ -650,7 +301,6 @@ function TextLayer({ modelRef }) {
         offsetX: 0.12,
         offsetY: -0.02,
       },
-
       {
         text: "Expressive",
         size: 0.37,
@@ -659,7 +309,6 @@ function TextLayer({ modelRef }) {
         offsetX: -0.02,
         offsetY: 0.03,
       },
-
       {
         text: "Innovative",
         size: 0.43,
@@ -668,15 +317,12 @@ function TextLayer({ modelRef }) {
         offsetX: 0.06,
         offsetY: -0.02,
       },
-
     ],
     []
   );
 
-
   const rightWords = useMemo(
     () => [
-
       {
         text: "Ideator",
         size: 0.39,
@@ -685,7 +331,6 @@ function TextLayer({ modelRef }) {
         offsetX: 0.00,
         offsetY: 0.00,
       },
-
       {
         text: "Strategist",
         size: 0.34,
@@ -694,7 +339,6 @@ function TextLayer({ modelRef }) {
         offsetX: -0.08,
         offsetY: 0.02,
       },
-
       {
         text: "Catalyst",
         size: 0.44,
@@ -703,7 +347,6 @@ function TextLayer({ modelRef }) {
         offsetX: 0.03,
         offsetY: -0.015,
       },
-
       {
         text: "Analyst",
         size: 0.30,
@@ -712,7 +355,6 @@ function TextLayer({ modelRef }) {
         offsetX: -0.04,
         offsetY: 0.025,
       },
-
       {
         text: "Futurist",
         size: 0.43,
@@ -721,15 +363,10 @@ function TextLayer({ modelRef }) {
         offsetX: 0.06,
         offsetY: -0.025,
       },
-
     ],
     []
   );
 
-
-  // ----------------------------------------------------------
-  // REFS FOR EVERY WORD
-  // ----------------------------------------------------------
 
   const leftRefs =
     useRef([]);
@@ -737,16 +374,10 @@ function TextLayer({ modelRef }) {
   const rightRefs =
     useRef([]);
 
-
-  // ----------------------------------------------------------
-  // BOUNDING BOX
-  // ----------------------------------------------------------
-
   const box = useMemo(
     () => new THREE.Box3(),
     []
   );
-
 
   const corners = useMemo(
     () =>
@@ -758,7 +389,6 @@ function TextLayer({ modelRef }) {
     []
   );
 
-
   const projected = useMemo(
     () =>
       Array.from(
@@ -769,11 +399,6 @@ function TextLayer({ modelRef }) {
     []
   );
 
-
-  // ----------------------------------------------------------
-  // WORLD POSITION FROM SCREEN POSITION
-  // ----------------------------------------------------------
-
   const getWorldPoint =
     (
       ndcX,
@@ -783,12 +408,9 @@ function TextLayer({ modelRef }) {
 
       const origin =
         new THREE.Vector3();
-
       origin.setFromMatrixPosition(
         camera.matrixWorld
       );
-
-
       const direction =
         new THREE.Vector3(
           ndcX,
@@ -798,7 +420,6 @@ function TextLayer({ modelRef }) {
           .unproject(camera)
           .sub(origin)
           .normalize();
-
 
       const distance =
         (
@@ -810,7 +431,6 @@ function TextLayer({ modelRef }) {
           -0.000001
         );
 
-
       return origin.clone().add(
         direction.multiplyScalar(
           distance
@@ -818,40 +438,26 @@ function TextLayer({ modelRef }) {
       );
     };
 
-
-  // ----------------------------------------------------------
-  // TYPOGRAPHY LAYOUT
-  // ----------------------------------------------------------
-
   useFrame(() => {
 
     if (!modelRef.current)
       return;
-
 
     modelRef.current.updateWorldMatrix(
       true,
       true
     );
 
-
     box.setFromObject(
       modelRef.current,
       true
     );
 
-
     if (box.isEmpty())
       return;
 
-
     const min = box.min;
     const max = box.max;
-
-
-    // --------------------------------------------------------
-    // 8 CORNERS OF 3D BOUNDING BOX
-    // --------------------------------------------------------
 
     corners[0].set(
       min.x,
@@ -901,17 +507,10 @@ function TextLayer({ modelRef }) {
       max.z
     );
 
-
-    // --------------------------------------------------------
-    // PROJECT MODEL TO SCREEN
-    // --------------------------------------------------------
-
     let minX = Infinity;
     let maxX = -Infinity;
-
     let minY = Infinity;
     let maxY = -Infinity;
-
 
     for (
       let i = 0;
@@ -923,13 +522,11 @@ function TextLayer({ modelRef }) {
         .copy(corners[i])
         .project(camera);
 
-
       minX =
         Math.min(
           minX,
           projected[i].x
         );
-
 
       maxX =
         Math.max(
@@ -937,13 +534,11 @@ function TextLayer({ modelRef }) {
           projected[i].x
         );
 
-
       minY =
         Math.min(
           minY,
           projected[i].y
         );
-
 
       maxY =
         Math.max(
@@ -952,65 +547,43 @@ function TextLayer({ modelRef }) {
         );
     }
 
-
-    // --------------------------------------------------------
-    // TEXT PLANE
-    // --------------------------------------------------------
-
     const textZ = -1.05;
-
-
     const modelLeft =
       getWorldPoint(
         minX,
         0,
         textZ
       ).x;
-
-
     const modelRight =
       getWorldPoint(
         maxX,
         0,
         textZ
       ).x;
-
-
     const modelTop =
       getWorldPoint(
         0,
         maxY,
         textZ
       ).y;
-
-
     const modelBottom =
       getWorldPoint(
         0,
         minY,
         textZ
       ).y;
-
-
     const modelWidth =
       Math.max(
         0.1,
         modelRight -
         modelLeft
       );
-
-
     const modelHeight =
       Math.max(
         0.1,
         modelTop -
         modelBottom
       );
-
-
-    // --------------------------------------------------------
-    // RESPONSIVE SCALE
-    // --------------------------------------------------------
 
     const responsive =
       THREE.MathUtils.clamp(
@@ -1019,26 +592,16 @@ function TextLayer({ modelRef }) {
         1.0
       );
 
-
-    // --------------------------------------------------------
-    // TEXT GROUP VERTICAL RANGE
-    //
-    // Each word gets its own position along this range.
-    // --------------------------------------------------------
-
     const verticalPadding =
       modelHeight * 0.05;
-
 
     const usableTop =
       modelTop -
       verticalPadding;
 
-
     const usableBottom =
       modelBottom +
       verticalPadding;
-
 
     const leftStep =
       (
@@ -1050,7 +613,6 @@ function TextLayer({ modelRef }) {
         1
       );
 
-
     const rightStep =
       (
         usableTop -
@@ -1061,39 +623,24 @@ function TextLayer({ modelRef }) {
         1
       );
 
-
-    // --------------------------------------------------------
-    // LEFT WORDS
-    // --------------------------------------------------------
-
-    leftWords.forEach(
+      leftWords.forEach(
       (word, index) => {
-
         const ref =
           leftRefs.current[index];
-
-
         if (!ref)
           return;
-
-
         const baseY =
           usableTop -
           index * leftStep;
 
-
-        // Each word gets a different horizontal
-        // relationship to the model.
         const dynamicOffset =
           modelWidth *
           word.offsetX;
-
 
         const x =
           modelLeft -
           modelWidth * 0.055 +
           dynamicOffset;
-
 
         ref.position.set(
           x,
@@ -1103,24 +650,16 @@ function TextLayer({ modelRef }) {
           textZ
         );
 
-
-        // Individual typography scale.
         ref.fontSize =
           word.size *
           responsive;
 
-
-        // Individual rotation.
         ref.rotation.z =
           word.rotation;
 
-
-        // Independent opacity.
         ref.fillOpacity =
           word.opacity;
 
-
-        // Individual word width.
         ref.maxWidth =
           THREE.MathUtils.clamp(
             modelWidth * 0.46,
@@ -1129,11 +668,6 @@ function TextLayer({ modelRef }) {
           );
       }
     );
-
-
-    // --------------------------------------------------------
-    // RIGHT WORDS
-    // --------------------------------------------------------
 
     rightWords.forEach(
       (word, index) => {
@@ -1141,26 +675,21 @@ function TextLayer({ modelRef }) {
         const ref =
           rightRefs.current[index];
 
-
         if (!ref)
           return;
-
 
         const baseY =
           usableTop -
           index * rightStep;
 
-
         const dynamicOffset =
           modelWidth *
           word.offsetX;
-
 
         const x =
           modelRight +
           modelWidth * 0.055 +
           dynamicOffset;
-
 
         ref.position.set(
           x,
@@ -1170,19 +699,15 @@ function TextLayer({ modelRef }) {
           textZ
         );
 
-
         ref.fontSize =
           word.size *
           responsive;
 
-
         ref.rotation.z =
           word.rotation;
 
-
         ref.fillOpacity =
           word.opacity;
-
 
         ref.maxWidth =
           THREE.MathUtils.clamp(
@@ -1192,11 +717,6 @@ function TextLayer({ modelRef }) {
           );
       }
     );
-
-
-    // --------------------------------------------------------
-    // VIEWPORT LIMITS
-    // --------------------------------------------------------
 
     const halfViewWidth =
       visibleWorldWidthAtZ(
@@ -1205,23 +725,15 @@ function TextLayer({ modelRef }) {
         textZ
       ) * 0.5;
 
-
-    // --------------------------------------------------------
-    // KEEP LEFT TYPOGRAPHY INSIDE VIEW
-    // --------------------------------------------------------
-
-    leftRefs.current.forEach(
+      leftRefs.current.forEach(
       (ref) => {
-
         if (!ref)
           return;
-
 
         if (
           ref.position.x <
           -halfViewWidth
         ) {
-
           ref.position.x =
             -halfViewWidth +
             0.15;
@@ -1229,17 +741,11 @@ function TextLayer({ modelRef }) {
       }
     );
 
-
-    // --------------------------------------------------------
-    // KEEP RIGHT TYPOGRAPHY INSIDE VIEW
-    // --------------------------------------------------------
-
     rightRefs.current.forEach(
       (ref) => {
 
         if (!ref)
           return;
-
 
         if (
           ref.position.x >
@@ -1254,17 +760,8 @@ function TextLayer({ modelRef }) {
     );
   });
 
-
-  // ==========================================================
-  // RENDER EVERY WORD INDEPENDENTLY
-  // ==========================================================
-
   return (
     <>
-
-      {/* ======================================================
-          LEFT TYPOGRAPHY
-          ====================================================== */}
 
       {leftWords.map(
         (word, index) => (
@@ -1314,11 +811,6 @@ function TextLayer({ modelRef }) {
 
         )
       )}
-
-
-      {/* ======================================================
-          RIGHT TYPOGRAPHY
-          ====================================================== */}
 
       {rightWords.map(
         (word, index) => (
@@ -1373,11 +865,6 @@ function TextLayer({ modelRef }) {
   );
 }
 
-
-// ============================================================
-// VIEWPORT WIDTH
-// ============================================================
-
 function visibleWorldWidthAtZ(
   camera,
   size,
@@ -1394,13 +881,11 @@ function visibleWorldWidthAtZ(
     );
   }
 
-
   const distance =
     Math.abs(
       camera.position.z -
       z
     );
-
 
   const vertical =
     2 *
@@ -1411,7 +896,6 @@ function visibleWorldWidthAtZ(
     ) *
     distance;
 
-
   return (
     vertical *
     (
@@ -1421,16 +905,10 @@ function visibleWorldWidthAtZ(
   );
 }
 
-
-// ============================================================
-// MAIN COMPONENT
-// ============================================================
-
 export default function HeadModel() {
 
   const modelRef =
     useRef();
-
 
   return (
 
@@ -1443,29 +921,23 @@ export default function HeadModel() {
     >
 
       <Canvas
-
         camera={{
           position: [
             0,
             0,
             4.5,
           ],
-
           fov: 45,
         }}
-
         gl={{
           alpha: true,
           antialias: true,
         }}
-
         onCreated={({ gl }) => {
-
           gl.setClearColor(
             0x000000,
             0
           );
-
         }}
       >
 
@@ -1473,18 +945,9 @@ export default function HeadModel() {
           fallback={null}
         >
 
-          {/* --------------------------------------------------
-              INDIVIDUAL WORD TYPOGRAPHY
-              -------------------------------------------------- */}
-
           <TextLayer
             modelRef={modelRef}
           />
-
-
-          {/* --------------------------------------------------
-              3D MODEL
-              -------------------------------------------------- */}
 
           <Model
             modelRef={modelRef}
@@ -1492,27 +955,18 @@ export default function HeadModel() {
 
         </Suspense>
 
-
         <EffectComposer>
-
           <Bloom
             intensity={0}
             luminanceThreshold={0.05}
             luminanceSmoothing={0.7}
           />
-
         </EffectComposer>
 
       </Canvas>
-
     </div>
   );
 }
-
-
-// ============================================================
-// PRELOAD MODEL
-// ============================================================
 
 useGLTF.preload(
   headModelPath

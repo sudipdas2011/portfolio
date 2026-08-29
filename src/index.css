@@ -72,7 +72,6 @@ body {
 }
 
 #root {
-  /* CHANGE: Change the fixed 1126px to fill the full monitor canvas width */
   width: 100vw;
   max-width: 100%;
   margin: 0;
@@ -131,7 +130,6 @@ code {
 }
 
 
-/* Fixes the black screen container layout visibility inside single-page snap-scrolling */
 .carousel-section-container {
   width: 100vw !important;
   height: 100vh !important;
@@ -140,7 +138,6 @@ code {
   overflow: hidden !important;
 }
 
-/* Forces the WebGL graphics layer context up to the surface screen layers */
 .carousel-section-container canvas {
   position: absolute !important;
   top: 0 !important;
@@ -148,10 +145,9 @@ code {
   width: 100% !important;
   height: 100% !important;
   display: block !important;
-  z-index: 50 !important; /* Positions it securely over the preceding R3F component layer leakage */
+  z-index: 50 !important; 
 }
 
-/* Adjusts HTML labels layer to keep titles interactive above the canvas */
 .carousel-section-container div {
   z-index: 55 !important;
 }

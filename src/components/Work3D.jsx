@@ -41,12 +41,6 @@ function WorkObject({ activeIndex = 0 }) {
   useFrame((state, delta) => {
     if (!groupRef.current) return;
 
-    /*
-     * ----------------------------------------------------------
-     * PAGE-SPECIFIC POSE
-     * ----------------------------------------------------------
-     */
-
     const targetRotation = {
       x:
         activeIndex === 0
@@ -67,10 +61,6 @@ function WorkObject({ activeIndex = 0 }) {
           ? 0.25
           : 0,
     };
-
-    /*
-     * Smooth rotation.
-     */
 
     groupRef.current.rotation.x =
       THREE.MathUtils.damp(
@@ -96,21 +86,11 @@ function WorkObject({ activeIndex = 0 }) {
         delta
       );
 
-    /*
-     * Subtle continuous rotation.
-     */
-
     groupRef.current.rotation.y +=
       delta *
       (activeIndex === 2
         ? 0.45
         : 0.22);
-
-    /*
-     * ----------------------------------------------------------
-     * SCALE
-     * ----------------------------------------------------------
-     */
 
     const targetScale =
       activeIndex === 0
@@ -130,12 +110,6 @@ function WorkObject({ activeIndex = 0 }) {
     groupRef.current.scale.setScalar(
       nextScale
     );
-
-    /*
-     * ----------------------------------------------------------
-     * GLASS THICKNESS
-     * ----------------------------------------------------------
-     */
 
     if (materialRef.current) {
       materialRef.current.thickness =
@@ -158,10 +132,6 @@ function WorkObject({ activeIndex = 0 }) {
         rotationIntensity={0.12}
         floatIntensity={0.25}
       >
-        {/* =====================================================
-            REFRACTIVE GLASS OBJECT
-        ===================================================== */}
-
         <mesh geometry={geometry}>
           <MeshTransmissionMaterial
             ref={materialRef}
@@ -179,11 +149,6 @@ function WorkObject({ activeIndex = 0 }) {
             color="#ffffff"
           />
         </mesh>
-
-        {/* =====================================================
-            SUBTLE WIREFRAME STRUCTURE
-        ===================================================== */}
-
         <mesh
           geometry={geometry}
           scale={1.012}

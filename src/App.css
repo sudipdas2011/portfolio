@@ -59,7 +59,6 @@ body {
   align-items: center;
   overflow: hidden;
   
-  /* CRITICAL: Forces the browser to process this page section as a standalone graphics tree */
   isolation: isolate !important; 
 }
 
@@ -68,25 +67,21 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1; /* Locked behind typography elements safely */
+  z-index: 1; 
   pointer-events: none;
 }
 
-/* Foreground typography element layer context */
+
 .who-fg-title-layer {
   position: relative;
-  z-index: 2; /* Forces text cleanly above WebGL rendering buffers */
+  z-index: 2; 
   pointer-events: none;
   display: flex;
   justify-content: center;
   align-items: center;
   
-  /* 
-    FIXED: We move the inversion filter layout out of inline JSX 
-    straight into the hardware-accelerated CSS stylesheet pipeline.
-  */
   filter: invert(1) brightness(2) !important; 
-  transform: translate3d(0, 0, 0); /* Triggers GPU layer caching mechanics */
+  transform: translate3d(0, 0, 0); 
 }
 
 .who-title {
@@ -429,7 +424,6 @@ p,
 
 
 
-/* --- THE CONTINUOUS CINEMATIC SEQUENCE SYSTEM --- */
 .who-section.full-backdrop-layout {
   position: relative;
   width: 100vw;
@@ -452,7 +446,6 @@ p,
   pointer-events: none;
 }
 
-/* Handles smooth canvas fading transitions */
 .content-fade-in {
   opacity: 1;
   animation: backgroundCanvasFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -473,11 +466,6 @@ p,
   transition: transform 0.6s cubic-bezier(0.76, 0, 0.24, 1), opacity 0.5s linear;
 }
 
-/* 
-  THE TEXT EXIT INTERPOLATION:
-  When the exit stage activates, this rule pushes the typography 
-  straight up out of the viewport window boundaries while dropping opacity to 0.
-*/
 .who-fg-content-overlay.text-stage-exit {
   transform: translate3d(0, -100px, 0) !important;
   opacity: 0 !important;
@@ -494,7 +482,6 @@ p,
 }
 
 
-/* --- THE 3D MAGAZINE MANIFESTO SECTION (WHAT I DO) --- */
 
 .what-section {
   position: relative;
@@ -632,7 +619,6 @@ p,
 }
 
 
-/* --- GLOBAL SMOOTH SCROLL SNAPPING CONTROLS --- */
 html {
   scroll-behavior: smooth;
 }
@@ -658,15 +644,6 @@ html {
 
 
 
-/* --- MAXIMUM COMPRESSION BRUTALIST PORTFOLIO MATRIX --- */
-/* --- DOODLE GRID SYSTEM TIMELINE (WHAT I DO) --- */
-/* --- AMPlIFIED EXTREME STRETCH TYPOGRAPHY CORE --- */
-/* --- WHAT I DO: TEXTRISE AND HORIZONTAL PIPELINE SYSTEM --- */
-/* --- MINIMALIST 3D MANIFESTO CORE --- */
-/* --- WHAT I DO: ATOMIC ISOLATED PIPELINE SYSTEM --- */
-/* --- THE ISOLATED 3D MANIFESTO TIMELINE ENGINE --- */
-/* --- FIXED BRUTALIST SEAMLESS ANIMATION PIPELINE --- */
-/* --- WHAT I DO ARCHITECTURE STYLES --- */
 
 .what-section {
   position: relative;
@@ -713,7 +690,7 @@ html {
   justify-content: center;
   align-items: center;
   text-align: center;
-  color: #000000 !important; /* Inverts cleanly to white inside the black section */
+  color: #000000 !important; 
 }
 
 .fixed-canvas-wrapper {
@@ -745,13 +722,11 @@ html {
 }
 
 
-/* --- BRUTALIST SEAMLESS NAVIGATION CONTROLS --- */
 
 .hide-global-cursor {
   cursor: none !important;
 }
 
-/* Blocks global Cursor.jsx layout indicators when interacting with navigation zones */
 .hide-global-cursor ~ .cursor,
 .hide-global-cursor ~ #custom-cursor-container,
 .hide-global-cursor * {
@@ -759,16 +734,12 @@ html {
 }
 
 
-/* --- EDGE HOVER ACTION SYSTEM BOUNDS --- */
-/* --- BRUTALIST SEAMLESS EDGE TRACKING LAYOUT --- */
-/* --- BRUTALIST SEAMLESS EDGE TRACKING LAYOUT --- */
-
 .edge-trigger-zone {
   position: absolute;
   top: 0;
   width: 25vw;
   height: 100vh;
-  z-index: 95; /* Keeps hover bounds layered safely above your WebGL viewport layers */
+  z-index: 95; 
   pointer-events: auto;
   background: transparent;
 }
@@ -781,7 +752,6 @@ html {
   right: 0;
 }
 
-/* Forces your default cursor square to hide while hovering over the edge triggers */
 .edge-trigger-zone:hover ~ .cursor,
 .edge-trigger-zone:hover ~ #custom-cursor-container {
   opacity: 0 !important;
@@ -802,7 +772,6 @@ html {
 }
 
 
-/* Fixes the black screen container layout visibility inside single-page snap-scrolling */
 .carousel-section-container {
   width: 100vw !important;
   height: 100vh !important;
@@ -811,7 +780,6 @@ html {
   overflow: hidden !important;
 }
 
-/* Forces the WebGL graphics layer context up to the surface screen layers */
 .carousel-section-container canvas {
   position: absolute !important;
   top: 0 !important;
@@ -819,10 +787,10 @@ html {
   width: 100% !important;
   height: 100% !important;
   display: block !important;
-  z-index: 50 !important; /* Positions it securely over the preceding R3F component layer leakage */
+  z-index: 50 !important; 
 }
 
-/* Adjusts HTML labels layer to keep titles interactive above the canvas */
+
 .carousel-section-container div {
   z-index: 55 !important;
 }
