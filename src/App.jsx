@@ -6,6 +6,7 @@ import Hero from './pages/Hero';
 import WhoAmI from './pages/WhoAmI'; 
 import WhatIDo from './pages/WhatIDo'; 
 import Carousel from './components/Carousel'; 
+import Contact from './pages/Contact';
 import NotFound from './pages/404'; 
 import './App.css';
 import img1 from './assets/cards/1.jpg';
@@ -35,8 +36,7 @@ function MainPortfolioView() {
       >
         <Carousel />
       </section>
-      {/*<section className="snap-section"><WhoAmI /></section>
-      <section className="snap-section"><WhatIDo /></section>*/}
+      <section className="snap-section"><Contact /></section>
     </div>
   );
 }

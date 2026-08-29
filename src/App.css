@@ -120,6 +120,24 @@ body {
   text-align: center;
   white-space: nowrap;
   font-weight: 500;
+  font-family: sans-serif;
+  color: #000;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  pointer-events: auto;
+}
+
+.hero-heading-2 {
+  max-width: calc(var(--text-clearance-width) * 1.6);
+  width: 100%;
+  font-size: calc(var(--orbit-radius) * 0.38);
+  display: block;
+  margin: 0 auto;
+  text-align: center;
+  white-space: nowrap;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
   color: #000;
   letter-spacing: -0.03em;
   line-height: 1;

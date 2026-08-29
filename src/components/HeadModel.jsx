@@ -774,11 +774,7 @@ function TextLayer({ modelRef }) {
                 el;
             }}
 
-            position={[
-              -1.5,
-              0,
-              -1.05,
-            ]}
+            position={[ -1.5, 0, -1.05, ]}
 
             fontSize={
               word.size
@@ -823,11 +819,7 @@ function TextLayer({ modelRef }) {
                 el;
             }}
 
-            position={[
-              1.5,
-              0,
-              -1.05,
-            ]}
+            position={[ 1.5, 0, -1.05, ]}
 
             fontSize={
               word.size
@@ -865,43 +857,20 @@ function TextLayer({ modelRef }) {
   );
 }
 
-function visibleWorldWidthAtZ(
-  camera,
-  size,
-  z
-) {
+function visibleWorldWidthAtZ( camera, size, z ) {
 
   if (
     camera.isOrthographicCamera
   ) {
-
     return (
-      camera.right -
-      camera.left
+      camera.right - camera.left
     );
-  }
-
-  const distance =
-    Math.abs(
-      camera.position.z -
-      z
-    );
-
-  const vertical =
-    2 *
-    Math.tan(
-      THREE.MathUtils.degToRad(
-        camera.fov * 0.5
-      )
-    ) *
-    distance;
+}
+  const distance = Math.abs( camera.position.z - z );
+  const vertical = 2 * Math.tan( THREE.MathUtils.degToRad( camera.fov * 0.5 ) ) * distance;
 
   return (
-    vertical *
-    (
-      size.width /
-      size.height
-    )
+    vertical * ( size.width / size.height )
   );
 }
 
@@ -922,11 +891,7 @@ export default function HeadModel() {
 
       <Canvas
         camera={{
-          position: [
-            0,
-            0,
-            4.5,
-          ],
+          position: [ 0, 0, 4.5, ],
           fov: 45,
         }}
         gl={{
@@ -940,19 +905,9 @@ export default function HeadModel() {
           );
         }}
       >
-
-        <Suspense
-          fallback={null}
-        >
-
-          <TextLayer
-            modelRef={modelRef}
-          />
-
-          <Model
-            modelRef={modelRef}
-          />
-
+        <Suspense fallback={null} >
+          <TextLayer modelRef={modelRef} />
+          <Model modelRef={modelRef} />
         </Suspense>
 
         <EffectComposer>
