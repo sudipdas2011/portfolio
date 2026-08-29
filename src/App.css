@@ -812,3 +812,30 @@ html {
 .carousel-section-container div {
   z-index: 55 !important;
 }
+
+
+
+
+/*/////////////////*/
+.contact-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.contact-text {
+  position: relative;
+  display: inline-block;
+}
+
+.click-here {
+  position: absolute;
+  top: -0.5rem;
+  right: 0;
+  
+  font-size: 1.2em;
+  line-height: 1;
+  color: #4169ff;
+  text-decoration: none;
+  white-space: nowrap;
+  pointer-events: none;
+}

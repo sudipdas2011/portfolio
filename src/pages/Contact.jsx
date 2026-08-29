@@ -1922,10 +1922,21 @@ export default function Contact() {
       >
         {startAnimation ? (
           <>
-            <TextRise
-              text="wanna contact ?"
-              className="hero-heading"
-            />
+            <a
+              href="https://github.com/sudipdas2011"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="contact-link"
+            >
+              <span className="contact-text">
+                <span className="click-here">click here.</span>
+
+                <TextRise
+                  text="wanna contact ?"
+                  className="hero-heading"
+                />
+              </span>
+            </a>
           </>
         ) : (
           <h1
@@ -1933,7 +1944,7 @@ export default function Contact() {
               opacity: 0,
             }}
           >
-            CONTACT
+            
           </h1>
         )}
       </div>
