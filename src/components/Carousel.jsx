@@ -11,98 +11,36 @@ const Carousel = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    console.log("=== [CAROUSEL ENGINE] Initializing with Configuration Pointers ===");
-    
     let animationFrameId;
-    let timer1;
-    let timer2;
     let isDestroyed = false;
 
     const initializeEngine = () => {
       if (isDestroyed) return;
       
-      if (!containerRef.current || !canvasRef.current) {
+      if (!canvasRef.current) {
         animationFrameId = requestAnimationFrame(initializeEngine);
         return;
       }
 
       try {
-        // 1. Initialize Scroll Controller with BOTH container and config parameters
-        if (typeof createScrollController === 'function') {
-          scrollEngineRef.current = createScrollController(containerRef.current, config);
-          console.log("✅ Scroll Controller initialized smoothly:", scrollEngineRef.current);
-        }
-
-        const rawCanvas = canvasRef.current;
-        const rawContainer = containerRef.current;
-
-        // 2. Build a Universal Proxy Object to safely route any layout properties
-        const universalTarget = new Proxy({}, {
-          get: (target, prop) => {
-            if (prop === 'canvas') return rawCanvas;
-            if (prop === 'container') return rawContainer;
-            if (prop === 'config') return config;
-            if (prop === 'scroll') return scrollEngineRef.current;
-            if (prop === 'onActiveChange') {
-              return (idx) => console.log(`🎯 Helix index transition -> ${idx}`);
-            }
-
-            if (typeof rawCanvas[prop] === 'function') {
-              return (...args) => rawCanvas[prop](...args);
-            }
-            
-            return rawCanvas[prop] !== undefined ? rawCanvas[prop] : rawContainer[prop];
+        cleanupFunctionRef.current = createCarousel(canvasRef.current, {
+          onActiveChange: (idx) => {
+            console.log(`🎯 Active card: ${idx}`);
+            setScrollProgress(idx);
           }
         });
-
-        // 3. Instantiate the WebGL Carousel via proxy mappings
-        if (typeof createCarousel === 'function') {
-          cleanupFunctionRef.current = createCarousel(universalTarget, universalTarget);
-          console.log("✅ WebGL Carousel Context mounted onto scene layers.");
-        }
       } catch (err) {
-        console.error("💥 Boot processing loop failed:", err);
+        console.error("Carousel error:", err);
       }
-
-      // 4. Position tracking frame update tick loop
-      const syncLoop = () => {
-        if (isDestroyed) return;
-        if (scrollEngineRef.current) {
-          setScrollProgress(scrollEngineRef.current.progress || 0);
-        }
-        animationFrameId = requestAnimationFrame(syncLoop);
-      };
-      animationFrameId = requestAnimationFrame(syncLoop);
-
-      // Force dimension scaling updates once on load to clear visual sizing locks
-      window.dispatchEvent(new Event('resize'));
     };
 
     animationFrameId = requestAnimationFrame(initializeEngine);
 
-    // 5. Safe resize handler: Triggers window update without looping
-    const handleResize = () => {
-      console.log("📐 Viewport resize detected. Updating layout bounds...");
-    };
-    window.addEventListener('resize', handleResize);
-
-    // 6. Component Cleanup Logic
     return () => {
-      console.log("=== [CAROUSEL ENGINE] Performing Garbage Collection ===");
       isDestroyed = true;
       cancelAnimationFrame(animationFrameId);
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      window.removeEventListener('resize', handleResize);
-      
       if (typeof cleanupFunctionRef.current === 'function') {
         cleanupFunctionRef.current();
-      }
-      
-      if (scrollEngineRef.current && typeof scrollEngineRef.current.destroy === 'function') {
-        scrollEngineRef.current.destroy();
-      } else if (scrollEngineRef.current && typeof scrollEngineRef.current.dispose === 'function') {
-        scrollEngineRef.current.dispose();
       }
     };
   }, []);

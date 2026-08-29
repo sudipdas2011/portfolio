@@ -19,6 +19,9 @@ export default function Loader({ onComplete, debug = false }) {
       '.jpeg',
       '.svg',
       '.mp4',
+      '.png',
+      '.webp',
+      
     ];
 
     const resources = performance.getEntriesByType('resource');
