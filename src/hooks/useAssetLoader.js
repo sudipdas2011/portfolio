@@ -23,16 +23,11 @@ export default function useAssetLoader(assets = []) {
 
     const load = () => {
       loaded += 1;
-
-      const progress = Math.round(
-        (loaded / assets.length) * 100
-      );
-
+      const progress = Math.round( (loaded / assets.length) * 100 );
       setProgress(progress);
 
       if (loaded === assets.length) {
         setReady(true);
-
         if (introDone.current) {
           setShow(false);
         }

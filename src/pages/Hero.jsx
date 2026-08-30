@@ -2,12 +2,12 @@ import { useState } from 'react';
 import TextRise from '../components/TextRise';
 import Orbit from '../components/Orbit';
 import Arrow from '../components/Arrow';
-import img1 from '../assets/cards/1.jpg';
-import img2 from '../assets/cards/2.jpg';
-import img3 from '../assets/cards/3.jpg';
-import img4 from '../assets/cards/4.jpg';
-import img5 from '../assets/cards/5.jpg';
-import img6 from '../assets/cards/6.jpg';
+import img1 from '../assets/cards/1.webp';
+import img2 from '../assets/cards/2.webp';
+import img3 from '../assets/cards/3.webp';
+import img4 from '../assets/cards/4.webp';
+import img5 from '../assets/cards/5.webp';
+import img6 from '../assets/cards/6.webp';
 
 export default function Hero() {
   const [textDone, setTextDone] = useState(false);

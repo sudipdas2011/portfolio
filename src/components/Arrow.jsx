@@ -170,28 +170,11 @@ export default function Arrow({
     const update = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-
-      const mouseX =
-        mouse.current.x;
-
-      const mouseY =
-        mouse.current.y;
-
-      const allowed =
-        isInsideAllowedSection(
-          mouseX,
-          mouseY
-        );
-
-      const insideRange =
-        isInsideRange(
-          mouseX,
-          mouseY
-        );
-
-      const active =
-        allowed &&
-        insideRange;
+      const mouseX = mouse.current.x;
+      const mouseY = mouse.current.y;
+      const allowed = isInsideAllowedSection( mouseX, mouseY );
+      const insideRange = isInsideRange( mouseX, mouseY );
+      const active = allowed && insideRange;
 
       if (
         active !==
@@ -202,8 +185,7 @@ export default function Arrow({
         onChange?.(active);
       }
 
-      const root =
-        document.documentElement;
+      const root = document.documentElement;
 
       if (active) {
         root.style.setProperty(
@@ -227,36 +209,16 @@ export default function Arrow({
       }
 
       if (ctx && canvas) {
-        ctx.clearRect(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
+        ctx.clearRect( 0, 0, canvas.width, canvas.height );
 
-        if (
-          trail &&
-          active
-        ) {
+        if ( trail && active ) {
           points.current.forEach(
             (point, index) => {
-              const size =
-                10 +
-                index * 1.2;
+              const size = 10 + index * 1.2;
 
-              ctx.fillStyle =
-                "#fff";
-
+              ctx.fillStyle = "#fff";
               ctx.beginPath();
-
-              ctx.arc(
-                point.x,
-                point.y,
-                size,
-                0,
-                Math.PI * 2
-              );
-
+              ctx.arc( point.x, point.y, size, 0, Math.PI * 2 );
               ctx.fill();
             }
           );
@@ -265,8 +227,7 @@ export default function Arrow({
         }
       }
 
-      const element =
-        arrowRef.current;
+      const element = arrowRef.current;
 
       if (!element) {
         frame =
@@ -278,44 +239,16 @@ export default function Arrow({
 
       if (active) {
         
-        arrow.current.x +=
-          (mouseX -
-            arrow.current.x) *
-          smooth;
+        arrow.current.x += (mouseX - arrow.current.x) * smooth;
+        arrow.current.y += (mouseY - arrow.current.y) * smooth;
 
-        arrow.current.y +=
-          (mouseY -
-            arrow.current.y) *
-          smooth;
+        const target = getTarget();
+        const dx = target.x - arrow.current.x;
+        const dy = target.y - arrow.current.y;
+        const targetAngle = Math.atan2( dy, dx ) * (180 / Math.PI);
+        const difference = normalizeAngle( targetAngle - arrow.current.angle );
 
-        const target =
-          getTarget();
-
-        const dx =
-          target.x -
-          arrow.current.x;
-
-        const dy =
-          target.y -
-          arrow.current.y;
-
-        const targetAngle =
-          Math.atan2(
-            dy,
-            dx
-          ) *
-          (180 / Math.PI);
-
-        const difference =
-          normalizeAngle(
-            targetAngle -
-              arrow.current.angle
-          );
-
-        arrow.current.angle +=
-          difference *
-          smooth;
-
+        arrow.current.angle += difference * smooth;
         element.style.transform =
           `translate3d(` +
           `${arrow.current.x}px, ` +
@@ -323,9 +256,7 @@ export default function Arrow({
           `rotate(` +
           `${arrow.current.angle}deg) ` +
           `scale(1)`;
-
-        element.style.opacity =
-          "1";
+        element.style.opacity = "1";
 
         onMove?.({
           x: mouseX,
@@ -335,12 +266,8 @@ export default function Arrow({
         });
       } else {
 
-        arrow.current.x =
-          mouseX;
-
-        arrow.current.y =
-          mouseY;
-
+        arrow.current.x = mouseX;
+        arrow.current.y = mouseY;
         element.style.transform =
           `translate3d(` +
           `${mouseX}px, ` +
@@ -348,9 +275,7 @@ export default function Arrow({
           `rotate(` +
           `${arrow.current.angle}deg) ` +
           `scale(0)`;
-
-        element.style.opacity =
-          "0";
+        element.style.opacity = "0";
       }
 
       frame =
@@ -410,10 +335,7 @@ export default function Arrow({
 
   return (
     <>
-      <svg
-        className="arrow-svg"
-        aria-hidden="true"
-      >
+      <svg className="arrow-svg" aria-hidden="true" >
         <defs>
           <filter id="arrow-goo">
             <feGaussianBlur
@@ -437,15 +359,10 @@ export default function Arrow({
       </svg>
 
       <div className="trail">
-        <canvas
-          ref={canvasRef}
-        />
+        <canvas ref={canvasRef} />
       </div>
 
-      <div
-        ref={arrowRef}
-        className="arrow"
-      >
+      <div ref={arrowRef} className="arrow" >
         <svg
           viewBox="0 0 24 24"
           width="100%"

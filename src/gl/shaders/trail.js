@@ -1,7 +1,3 @@
-// Persistent trail buffer, ping-ponged between two half-float targets.
-//   r    = trail intensity
-//   g, b = cursor velocity at the moment that pixel was painted (signed, which
-//          is why this target has to be float — an 8-bit one cannot hold it)
 export const trailFragment = /* glsl */ `
   varying vec2 vUv;
 
@@ -24,8 +20,6 @@ export const trailFragment = /* glsl */ `
   }
 
   void main() {
-    // Blur the previous frame a touch so the trail dissolves outward instead
-    // of only dimming in place.
     vec2 o = uTexel * uDissipate;
     vec4 prev = texture2D(uPrev, vUv) * 0.6;
     prev += texture2D(uPrev, vUv + vec2(o.x, 0.0)) * 0.1;
@@ -33,12 +27,6 @@ export const trailFragment = /* glsl */ `
     prev += texture2D(uPrev, vUv + vec2(0.0, o.y)) * 0.1;
     prev += texture2D(uPrev, vUv - vec2(0.0, o.y)) * 0.1;
 
-    // Paint along the segment travelled this frame, so fast flicks stay
-    // continuous instead of leaving a dotted line. Worked in CSS pixels so the
-    // brush is a fixed physical size rather than stretching with the viewport's
-    // shape. uMouse may fall outside 0..1 when the cursor leaves the window;
-    // the distance field handles that on its own and the brush slides out of
-    // frame instead of sticking to the edge.
     float d = sdSegment(vUv * uSize, uPrevMouse * uSize, uMouse * uSize);
 
     float brush = 1.0 - smoothstep(uRadius * 0.25, uRadius, d);

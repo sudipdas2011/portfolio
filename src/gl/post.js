@@ -75,8 +75,6 @@ export function createPostPipeline(renderer, config, background) {
       uHoverDitherScale: { value: config.hoverDitherScale },
       uHoverDitherCutoff: { value: config.hoverDitherCutoff },
       uHoverClean: { value: config.hoverClean },
-      // Palettes live on the uniforms rather than being re-parsed from hex
-      // every frame — the gui writes them through on change.
       uInk: { value: hexToSRGB(config.ditherInk) },
       uAccent: { value: hexToSRGB(config.ditherAccent) },
       uPaper: { value: hexToSRGB(config.ditherPaper) },
@@ -130,10 +128,6 @@ export function createPostPipeline(renderer, config, background) {
   quad.frustumCulled = false;
   quadScene.add(quad);
 
-  // The renderer's antialias flag only covers the default framebuffer, and
-  // every card is drawn into this target instead, so card edges get no AA at
-  // all without a multisampled attachment here. WebGL2 resolves it on read.
-  // Only the scene target needs it — the blur chain is already smooth.
   let sceneTarget = new THREE.WebGLRenderTarget(1, 1, {
     minFilter: THREE.LinearFilter,
     magFilter: THREE.LinearFilter,
@@ -142,8 +136,6 @@ export function createPostPipeline(renderer, config, background) {
   });
   sceneTarget.texture.generateMipmaps = false;
 
-  // Each level needs a scratch target to hold the along-axis pass before the
-  // across-axis one writes the final.
   let blurTargets = [];
   let scratchTargets = [];
 

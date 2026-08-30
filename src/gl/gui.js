@@ -35,8 +35,6 @@ export function createGui(config, handlers) {
   snap.add(config, "snapStiffness", 0.01, 0.4, 0.005).name("spring stiffness");
   snap.add(config, "snapDamping", 0.3, 0.95, 0.01).name("spring damping");
 
-  // The arrival. `replay` reruns it in place — it plays once per reload
-  // otherwise, which is no way to tune anything.
   const entry = gui.addFolder("entry");
   entry.add(config, "entry").name("enabled");
   entry.add({ replay: handlers.onEntryReplay }, "replay").name("▶ replay");
@@ -151,8 +149,6 @@ export function createGui(config, handlers) {
   stage.add(config, "stageDitherBegin", 0, 0.95, 0.01).name("dither starts at");
   stage.add(config, "stageHandoff", 0, 1, 0.01).name("streak yields");
 
-  // Frame-edge dither. Its palette and tone controls mirror the hover folder's
-  // above, and the two are fully independant of each other.
   const dither = gui.addFolder("dither");
   dither.add(config, "dither").name("enabled");
   dither.add(config, "ditherAmount", 0, 1, 0.01).name("intensity");
@@ -178,8 +174,6 @@ export function createGui(config, handlers) {
   dither.add(config, "ditherPower", 0.2, 4, 0.05).name("ramp curve");
   dither.add(config, "ditherDepth", 0, 1, 0.01).name("distance triggers");
 
-  // Cursor trail — the same dither machinery as the two folders above, but
-  // driven by a buffer that remembers where the pointer has been.
   const trail = gui.addFolder("cursor trail");
   trail.add(config, "trail").name("enabled");
   trail.add(config, "trailRadius", 10, 500, 1).name("size (px)");

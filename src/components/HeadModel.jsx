@@ -459,53 +459,15 @@ function TextLayer({ modelRef }) {
     const min = box.min;
     const max = box.max;
 
-    corners[0].set(
-      min.x,
-      min.y,
-      min.z
-    );
-
-    corners[1].set(
-      max.x,
-      min.y,
-      min.z
-    );
-
-    corners[2].set(
-      min.x,
-      max.y,
-      min.z
-    );
-
-    corners[3].set(
-      max.x,
-      max.y,
-      min.z
-    );
-
-    corners[4].set(
-      min.x,
-      min.y,
-      max.z
-    );
-
-    corners[5].set(
-      max.x,
-      min.y,
-      max.z
-    );
-
-    corners[6].set(
-      min.x,
-      max.y,
-      max.z
-    );
-
-    corners[7].set(
-      max.x,
-      max.y,
-      max.z
-    );
+    corners[0].set( max.x, min.y, max.z );
+    corners[1].set( max.x, min.y, max.z );
+    corners[2].set( max.x, min.y, max.z );
+    corners[3].set( max.x, min.y, max.z );
+    corners[4].set( max.x, min.y, max.z );
+    corners[5].set( max.x, min.y, max.z );
+    corners[5].set( max.x, min.y, max.z );
+    corners[6].set( min.x, max.y, max.z );
+    corners[7].set( max.x, max.y, max.z );
 
     let minX = Infinity;
     let maxX = -Infinity;
@@ -522,199 +484,68 @@ function TextLayer({ modelRef }) {
         .copy(corners[i])
         .project(camera);
 
-      minX =
-        Math.min(
-          minX,
-          projected[i].x
-        );
-
-      maxX =
-        Math.max(
-          maxX,
-          projected[i].x
-        );
-
-      minY =
-        Math.min(
-          minY,
-          projected[i].y
-        );
-
-      maxY =
-        Math.max(
-          maxY,
-          projected[i].y
-        );
+      minX = Math.min( minX, projected[i].x );
+      maxX = Math.max( maxX, projected[i].x );
+      minY = Math.min( minY, projected[i].y );
+      maxY = Math.max( maxY, projected[i].y );
     }
 
     const textZ = -1.05;
-    const modelLeft =
-      getWorldPoint(
-        minX,
-        0,
-        textZ
-      ).x;
-    const modelRight =
-      getWorldPoint(
-        maxX,
-        0,
-        textZ
-      ).x;
-    const modelTop =
-      getWorldPoint(
-        0,
-        maxY,
-        textZ
-      ).y;
-    const modelBottom =
-      getWorldPoint(
-        0,
-        minY,
-        textZ
-      ).y;
-    const modelWidth =
-      Math.max(
-        0.1,
-        modelRight -
-        modelLeft
-      );
-    const modelHeight =
-      Math.max(
-        0.1,
-        modelTop -
-        modelBottom
-      );
-
-    const responsive =
-      THREE.MathUtils.clamp(
-        size.width / 1500,
-        0.70,
-        1.0
-      );
-
-    const verticalPadding =
-      modelHeight * 0.05;
-
-    const usableTop =
-      modelTop -
-      verticalPadding;
-
-    const usableBottom =
-      modelBottom +
-      verticalPadding;
-
-    const leftStep =
-      (
-        usableTop -
-        usableBottom
-      ) /
-      Math.max(
-        leftWords.length - 1,
-        1
-      );
-
-    const rightStep =
-      (
-        usableTop -
-        usableBottom
-      ) /
-      Math.max(
-        rightWords.length - 1,
-        1
-      );
+    const modelLeft = getWorldPoint( minX, 0, textZ ).x;
+    const modelRight = getWorldPoint( maxX, 0, textZ ).x;
+    const modelTop = getWorldPoint( 0, maxY, textZ ).y;
+    const modelBottom = getWorldPoint( 0, minY, textZ ).y;
+    const modelWidth = Math.max( 0.1, modelRight - modelLeft );
+    const modelHeight = Math.max( 0.1, modelTop - modelBottom );
+    const responsive = THREE.MathUtils.clamp( size.width / 1500, 0.70, 1.0 );
+    const verticalPadding = modelHeight * 0.05;
+    const usableTop = modelTop - verticalPadding;
+    const usableBottom = modelBottom + verticalPadding;
+    const leftStep = ( usableTop - usableBottom ) / Math.max( leftWords.length - 1, 1 );
+    const rightStep = ( usableTop - usableBottom ) / Math.max( rightWords.length - 1, 1 );
 
       leftWords.forEach(
       (word, index) => {
-        const ref =
-          leftRefs.current[index];
+        const ref = leftRefs.current[index];
         if (!ref)
           return;
-        const baseY =
-          usableTop -
-          index * leftStep;
-
-        const dynamicOffset =
-          modelWidth *
-          word.offsetX;
-
-        const x =
-          modelLeft -
-          modelWidth * 0.055 +
-          dynamicOffset;
+        const baseY = usableTop - index * leftStep;
+        const dynamicOffset = modelWidth * word.offsetX;
+        const x = modelLeft - modelWidth * 0.055 + dynamicOffset;
 
         ref.position.set(
           x,
-          baseY +
-            modelHeight *
-            word.offsetY,
+          baseY + modelHeight * word.offsetY,
           textZ
         );
-
-        ref.fontSize =
-          word.size *
-          responsive;
-
-        ref.rotation.z =
-          word.rotation;
-
-        ref.fillOpacity =
-          word.opacity;
-
-        ref.maxWidth =
-          THREE.MathUtils.clamp(
-            modelWidth * 0.46,
-            0.65,
-            1.7
-          );
+        ref.fontSize = word.size * responsive;
+        ref.rotation.z = word.rotation;
+        ref.fillOpacity = word.opacity;
+        ref.maxWidth = THREE.MathUtils.clamp( modelWidth * 0.46, 0.65, 1.7 );
       }
     );
 
     rightWords.forEach(
       (word, index) => {
 
-        const ref =
-          rightRefs.current[index];
+        const ref = rightRefs.current[index];
 
         if (!ref)
           return;
 
-        const baseY =
-          usableTop -
-          index * rightStep;
-
-        const dynamicOffset =
-          modelWidth *
-          word.offsetX;
-
-        const x =
-          modelRight +
-          modelWidth * 0.055 +
-          dynamicOffset;
+        const baseY = usableTop - index * rightStep;
+        const dynamicOffset = modelWidth * word.offsetX;
+        const x = modelRight + modelWidth * 0.055 + dynamicOffset;
 
         ref.position.set(
           x,
-          baseY +
-            modelHeight *
-            word.offsetY,
+          baseY + modelHeight * word.offsetY, 
           textZ
         );
-
-        ref.fontSize =
-          word.size *
-          responsive;
-
-        ref.rotation.z =
-          word.rotation;
-
-        ref.fillOpacity =
-          word.opacity;
-
-        ref.maxWidth =
-          THREE.MathUtils.clamp(
-            modelWidth * 0.46,
-            0.65,
-            1.7
-          );
+        ref.fontSize = word.size * responsive;
+        ref.rotation.z = word.rotation;
+        ref.fillOpacity = word.opacity;
+        ref.maxWidth = THREE.MathUtils.clamp( modelWidth * 0.46, 0.65, 1.7 );
       }
     );
 
@@ -731,12 +562,9 @@ function TextLayer({ modelRef }) {
           return;
 
         if (
-          ref.position.x <
-          -halfViewWidth
+          ref.position.x < -halfViewWidth
         ) {
-          ref.position.x =
-            -halfViewWidth +
-            0.15;
+          ref.position.x = -halfViewWidth + 0.15;
         }
       }
     );
@@ -746,15 +574,10 @@ function TextLayer({ modelRef }) {
 
         if (!ref)
           return;
-
         if (
-          ref.position.x >
-          halfViewWidth
+          ref.position.x > halfViewWidth
         ) {
-
-          ref.position.x =
-            halfViewWidth -
-            0.15;
+          ref.position.x = halfViewWidth - 0.15;
         }
       }
     );
@@ -768,38 +591,21 @@ function TextLayer({ modelRef }) {
 
           <Text
             key={`left-${word.text}`}
-
             ref={(el) => {
               leftRefs.current[index] =
                 el;
             }}
-
             position={[ -1.5, 0, -1.05, ]}
-
-            fontSize={
-              word.size
-            }
-
+            fontSize={ word.size }
             maxWidth={1.4}
-
             lineHeight={1}
-
-            letterSpacing={
-              -0.025
-            }
-
+            letterSpacing={ -0.025 }
             anchorX="right"
             anchorY="middle"
-
             color="#ffffff"
-
-            fillOpacity={
-              word.opacity
-            }
-
+            fillOpacity={ word.opacity }
             depthTest={false}
             depthWrite={false}
-
             renderOrder={1}
           >
             {word.text}
@@ -813,38 +619,21 @@ function TextLayer({ modelRef }) {
 
           <Text
             key={`right-${word.text}`}
-
             ref={(el) => {
               rightRefs.current[index] =
                 el;
             }}
-
             position={[ 1.5, 0, -1.05, ]}
-
-            fontSize={
-              word.size
-            }
-
+            fontSize={ word.size }
             maxWidth={1.4}
-
             lineHeight={1}
-
-            letterSpacing={
-              -0.025
-            }
-
+            letterSpacing={ -0.025 }
             anchorX="left"
             anchorY="middle"
-
             color="#ffffff"
-
-            fillOpacity={
-              word.opacity
-            }
-
+            fillOpacity={ word.opacity }
             depthTest={false}
             depthWrite={false}
-
             renderOrder={1}
           >
             {word.text}
@@ -862,9 +651,7 @@ function visibleWorldWidthAtZ( camera, size, z ) {
   if (
     camera.isOrthographicCamera
   ) {
-    return (
-      camera.right - camera.left
-    );
+    return ( camera.right - camera.left );
 }
   const distance = Math.abs( camera.position.z - z );
   const vertical = 2 * Math.tan( THREE.MathUtils.degToRad( camera.fov * 0.5 ) ) * distance;
@@ -876,8 +663,7 @@ function visibleWorldWidthAtZ( camera, size, z ) {
 
 export default function HeadModel() {
 
-  const modelRef =
-    useRef();
+  const modelRef = useRef();
 
   return (
 

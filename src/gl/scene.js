@@ -466,7 +466,6 @@ export function createCarousel(canvas, { onActiveChange } = {}) {
 
     c.uTrail.value = trail.update();
 
-    // Export card screen positions for labels overlay
     const cardPositions = cards.map((card, index) => {
       const worldPos = new THREE.Vector3();
       card.getWorldPosition(worldPos);

@@ -21,7 +21,8 @@ export default function Loader({ onComplete, debug = false }) {
       '.mp4',
       '.png',
       '.webp',
-      
+      '.glb',
+      '.hdr',
     ];
 
     const resources = performance.getEntriesByType('resource');
