@@ -37,7 +37,7 @@ export default function Loader({ onComplete, debug = false }) {
       clearTimeout(timer);
       setTimeout(() => {
         onComplete?.();
-      }, 750 * 5);
+      }, 750 / 5);
     };
 
     const fallback = () => {
