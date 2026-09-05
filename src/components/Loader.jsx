@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 
-export default function Loader({ onComplete, debug = false }) {
+export default function Loader({
+  assets = [],
+  onComplete,
+  debug = false,
+}) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
@@ -9,112 +13,144 @@ export default function Loader({ onComplete, debug = false }) {
       return;
     }
 
-    const types = [
-      '.js',
-      '.css',
-      '.woff',
-      '.woff2',
-      '.png',
-      '.jpg',
-      '.jpeg',
-      '.svg',
-      '.mp4',
-      '.png',
-      '.webp',
-      '.glb',
-      '.hdr',
-    ];
+    let cancelled = false;
+    let completed = 0;
 
-    const resources = performance.getEntriesByType('resource');
-    const assets = resources.filter((item) =>
-      types.some((type) => item.name.toLowerCase().includes(type))
-    );
+    const total = assets.length;
 
-    let loaded = 0;
-    let timer;
-
-    const done = () => {
-      clearTimeout(timer);
-      setTimeout(() => {
-        onComplete?.();
-      }, 750 / 5);
-    };
-
-    const fallback = () => {
-      let value = 0;
-
-      const interval = setInterval(() => {
-        value += 1;
-        setProgress(value);
-
-        if (value >= 100) {
-          clearInterval(interval);
-          timer = setTimeout(done, 150);
-        }
-      }, 20);
-
-      return interval;
-    };
-
-    if (!assets.length || assets.every((item) => item.duration > 0)) {
-      const interval = fallback();
-
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timer);
-      };
+    if (total === 0) {
+      setProgress(100);
+      onComplete?.();
+      return;
     }
 
-    let fonts = false;
+    const updateProgress = () => {
+      if (cancelled) return;
 
-    const check = () => {
-      const resourceProgress =
-        assets.length > 0 ? (loaded / assets.length) * 100 : 100;
+      completed += 1;
 
-      const percent = Math.floor(
-        (resourceProgress + (fonts ? 100 : 0)) / 2
+      const percent = Math.round(
+        (completed / total) * 100
       );
 
       setProgress(percent);
-
-      if (loaded >= assets.length && fonts) {
-        timer = setTimeout(done, 150);
-      }
     };
 
-    document.fonts.ready.then(() => {
-      fonts = true;
-      check();
-    });
+    const loadImage = (src) =>
+      new Promise((resolve) => {
+        const img = new Image();
 
-    const observer = new PerformanceObserver((list) => {
-      list.getEntries().forEach((entry) => {
-        if (types.some((type) => entry.name.toLowerCase().includes(type))) {
-          loaded += 1;
-          check();
-        }
+        img.onload = () => {
+          updateProgress();
+          resolve();
+        };
+
+        img.onerror = () => {
+          console.warn('Failed to preload:', src);
+          updateProgress();
+          resolve();
+        };
+
+        img.src = src;
       });
-    });
 
-    try {
-      observer.observe({
-        type: 'resource',
-        buffered: true,
+    const loadFont = (src) =>
+      new Promise((resolve) => {
+        const font = new FontFace(
+          `LoaderFont-${Math.random()}`,
+          `url("${src}")`
+        );
+
+        font.load()
+          .then((loadedFont) => {
+            document.fonts.add(loadedFont);
+          })
+          .catch(() => {
+            console.warn('Failed to preload font:', src);
+          })
+          .finally(() => {
+            updateProgress();
+            resolve();
+          });
       });
-    } catch {
-      const interval = fallback();
 
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timer);
-      };
-    }
+    const loadBinary = (src) =>
+      fetch(src, {
+        cache: 'reload',
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Failed: ${src}`);
+          }
+
+          return response.arrayBuffer();
+        })
+        .catch(() => {
+          console.warn('Failed to preload:', src);
+        })
+        .finally(() => {
+          updateProgress();
+        });
+
+    const loadAsset = (src) => {
+      const lower = src.toLowerCase();
+
+      // Images
+      if (
+        lower.endsWith('.png') ||
+        lower.endsWith('.jpg') ||
+        lower.endsWith('.jpeg') ||
+        lower.endsWith('.webp') ||
+        lower.endsWith('.gif') ||
+        lower.endsWith('.svg')
+      ) {
+        return loadImage(src);
+      }
+
+      // Fonts
+      if (
+        lower.endsWith('.woff') ||
+        lower.endsWith('.woff2') ||
+        lower.endsWith('.otf') ||
+        lower.endsWith('.ttf')
+      ) {
+        return loadFont(src);
+      }
+
+      // GLB / GLTF / HDR / other files
+      return loadBinary(src);
+    };
+
+    const preloadEverything = async () => {
+     
+      await Promise.all(
+        assets.map((asset) => loadAsset(asset))
+      );
+
+      if (cancelled) return;
+
+      await document.fonts.ready;
+
+      if (cancelled) return;
+
+      setProgress(100);
+      requestAnimationFrame(() => {
+        if (cancelled) return;
+
+        setTimeout(() => {
+          if (!cancelled) {
+            onComplete?.();
+          }
+        }, 200);
+      });
+    };
+
+    preloadEverything();
 
     return () => {
-      observer.disconnect();
-      clearTimeout(timer);
+      cancelled = true;
     };
-  }, [debug, onComplete]);
+  }, [assets, debug, onComplete]);
 
   return (
     <div className="loader">
@@ -122,7 +158,9 @@ export default function Loader({ onComplete, debug = false }) {
         <div className="loader-track">
           <div
             className="loader-fill"
-            style={{ width: `${progress}%` }}
+            style={{
+              width: `${progress}%`,
+            }}
           />
         </div>
       </div>
